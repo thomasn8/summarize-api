@@ -6,8 +6,8 @@ services:
       - front
       - back
     ports:
-      - "8080:80"
-      - "8443:443"
+      - "9080:80"
+      - "9443:443"
     volumes:
       - ./_build/nginx/certs:/certs
     networks:
