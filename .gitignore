@@ -6,7 +6,4 @@ _build/nginx/certs/*.key
 back/node_modules
 back/dist
 
-front/node_modules
-front/.angular
-
 .DS_Store

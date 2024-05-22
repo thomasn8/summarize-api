@@ -16,7 +16,7 @@ setup:
 started:
 			${DOCKER} -f ./docker-compose.started.yml up -d --build
 clean: down
-			 rm -rf back front _build/nginx/certs
+			 rm -rf back _build/nginx/certs
 re:		down start
 
 # certs:
@@ -27,24 +27,15 @@ logs:
 flogs:
 			${DOCKER} logs -f
 
-front:
-			${DOCKER} logs -f front
 back:
 			${DOCKER} logs -f back
 nginx:
 			${DOCKER} logs -f nginx
-db:
-			${DOCKER} logs -f db
 
 
-runfront:
-			${DOCKER} exec front bash
 runback:
 			${DOCKER} exec back bash
 runnginx:
 			${DOCKER} exec nginx bash
-rundb:
-			${DOCKER} exec db bash
 
-
-.PHONY:		all start build down setup clean re logs flogs front back nginx db runfront runback runningx rundb
+.PHONY:		all start build down setup clean re logs flogs back nginx runback runningx
