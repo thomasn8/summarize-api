@@ -1,0 +1,61 @@
+services:
+
+  nginx:
+    build: ./_build/nginx
+    depends_on:
+      - front
+      - back
+    ports:
+      - "8080:80"
+      - "8443:443"
+    volumes:
+      - ./_build/nginx/certs:/certs
+    networks:
+      - app_network
+    environment:
+      BUILD_TYPE: prod
+    restart: "on-failure"
+
+  front:
+    build: ./_build/front
+    volumes:
+      - ./front:/${APP_NAME}
+    networks:
+      - app_network
+    working_dir: /${APP_NAME}
+    environment:
+      BUILD_TYPE: prod
+    restart: "on-failure"
+
+  back:
+    build: ./_build/back
+    depends_on:
+      - db
+    volumes:
+      - ./back:/${APP_NAME}
+    networks:
+      - app_network
+    working_dir: /${APP_NAME}
+    env_file:
+      - .env
+    environment:
+      BUILD_TYPE: prod
+
+  db:
+    image: mariadb
+    volumes:
+      - vol_db:/var/lib/mysql/
+    networks:
+      - app_network
+    environment:
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MARIADB_DATABASE: ${DB_DATABASE}
+      MARIADB_USER: ${DB_USERNAME}
+      MARIADB_PASSWORD: ${DB_PASSWORD}
+    restart: "on-failure"
+
+networks:
+  app_network:
+
+volumes:
+  vol_db:

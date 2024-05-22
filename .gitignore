@@ -1,0 +1,12 @@
+.env
+
+_build/nginx/certs/*.crt
+_build/nginx/certs/*.key
+
+back/node_modules
+back/dist
+
+front/node_modules
+front/.angular
+
+.DS_Store

@@ -1,0 +1,13 @@
+services:
+
+  nginx:
+    environment:
+      BUILD_TYPE: "Started" 
+
+  front:
+    environment:
+      BUILD_TYPE: "Started" 
+
+  back:
+    environment:
+      BUILD_TYPE: "Started"
