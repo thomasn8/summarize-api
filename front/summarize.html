@@ -1,56 +1,78 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>API Request Form</title>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Summarize</title>
 </head>
 <body>
-    <h1>Submit Data to API</h1>
-    <form id="apiForm">
-        <label for="name">Name:</label>
-        <input type="text" id="name" name="name" required><br><br>
+	<h1>Summarize</h1>
+	<form id="apiForm">
+		<label for="api-key">Api key:</label>
+		<input type="text" id="api-key" name="api-key" autocomplete="on" autofocus required><br><br>
 
-        <label for="email">Email:</label>
-        <input type="email" id="email" name="email" required><br><br>
+		<label for="email">*Email:</label>
+		<input type="email" id="email" name="email" autocomplete="on"><br><br>
 
-        <button type="submit">Submit</button>
-    </form>
+		<label for="length">Summary length (number of words):</label>
+		<input type="number" id="length" name="length" value="300" min="20" max="2000" autocomplete="on" required><br><br>
 
-    <p id="response"></p>
+		<label for="expertise">Expertise:</label>
+		<textarea id="expertise" name="expertise" rows="3" cols="33" autocomplete="on" required></textarea><br><br>
+		
+		<label for="directive">Directive:</label>
+		<textarea id="directive" name="directive" rows="3" cols="33" autocomplete="on" required></textarea><br><br>
 
-    <script>
-        document.getElementById('apiForm').addEventListener('submit', function(event) {
-            event.preventDefault(); // Prevent the default form submission
+		<label for="urls">Links (urls):</label>
+		<textarea id="urls" name="urls" rows="6" cols="33" required></textarea><br><br>
 
-            const name = document.getElementById('name').value;
-            const email = document.getElementById('email').value;
+		<button type="submit">Submit</button>
+	</form>
 
-            // Example API endpoint
-            const apiEndpoint = 'https://api.example.com/submit';
+	<p id="response"></p>
 
-            // Prepare the data to be sent
-            const data = {
-                name: name,
-                email: email
-            };
+	<script>
+		document.getElementById('apiForm').addEventListener('submit', function(event) {
+			event.preventDefault();
 
-            // Make the API request using fetch
-            fetch(apiEndpoint, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(data)
-            })
-            .then(response => response.json())
-            .then(data => {
-                document.getElementById('response').innerText = 'Success: ' + JSON.stringify(data);
-            })
-            .catch((error) => {
-                document.getElementById('response').innerText = 'Error: ' + error;
-            });
-        });
-    </script>
+			const apiKey = document.getElementById('api-key').value;
+			const email = document.getElementById('email').value;
+			const length = document.getElementById('length').value;
+			const expertise = document.getElementById('expertise').value;
+			const directive = document.getElementById('directive').value;
+			const urls = document.getElementById('urls').value;
+
+			const apiEndpoint = 'https://localhost:9443/summarize';
+			const data = {
+				apiKey: apiKey,
+				email: email,
+				length: length,
+				expertise: expertise,
+				directive: directive,
+				urls: urls,
+			};
+			
+			fetch(apiEndpoint, {
+				method: 'POST',
+				headers: {
+						'Content-Type': 'application/json'
+				},
+				body: JSON.stringify(data)
+			})
+			.then(response => response.json())
+			.then(data => {
+				console.log(data);
+				if (data['summary'] === undefined) {
+					document.getElementById('response').innerText = 
+						'Error: ' + data['message'] ?? 'something went wrong';
+				} else {
+					document.getElementById('response').innerText = data['summary'];
+				}
+			})
+			.catch((error) => {
+				document.getElementById('response').innerText = 'Error: ' + error;
+			});
+		})
+	</script>
 </body>
 </html>
