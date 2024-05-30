@@ -1,6 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { RequestDto } from './dto/request.dto';
 
+import axios from 'axios';
+import cheerio from 'cheerio';
+import { YoutubeTranscript } from 'youtube-transcript';
+import OpenAI from 'openai';
+
 @Injectable()
 export class SummarizeService {
   async getSummary(request: RequestDto): Promise<string> {
