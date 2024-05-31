@@ -1,11 +1,11 @@
 import {
-  IsEmail,
+  IsIn,
   IsNotEmpty,
   IsNumber,
   IsOptional,
-  IsPositive,
   IsString,
   Max,
+  MaxLength,
   Min
 } from 'class-validator';
 
@@ -14,24 +14,35 @@ export class RequestDto {
   @IsString()
   apiKey: string;
 
-  @IsEmail()
-  @IsOptional()
-  email?: string;
+  @IsNotEmpty()
+  @IsString()
+  model: string;
 
   @IsNotEmpty()
   @IsNumber()
-  @IsPositive()
-  @Max(2000)
-  @Min(20)
-  length: number;
+  @IsIn([1, 2, 3])
+  details: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Max(4000)
+  @Min(0)
+  length?: number;
 
   @IsNotEmpty()
   @IsString()
-  expertise: string;
+  @IsIn(['english', 'french'])
+  language: string;
 
-  @IsNotEmpty()
+  @IsOptional()
   @IsString()
-  directive: string;
+  @MaxLength(100)
+  expertise?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  directive?: string;
 
   @IsNotEmpty()
   @IsString()

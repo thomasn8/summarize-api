@@ -1,17 +1,14 @@
 import { Body, Controller, Post } from '@nestjs/common';
 import { SummarizeService } from './summarize.service';
 import { RequestDto } from './dto/request.dto';
-
-interface response {
-  summary: string;
-}
+import { ResponseDto } from './dto/response.dto';
 
 @Controller('summarize')
 export class SummarizeController {
   constructor(private readonly summarizeService: SummarizeService) {}
 
   @Post()
-  async getSummary(@Body() request: RequestDto): Promise<response> {
-    return { summary: await this.summarizeService.getSummary(request) };
+  public async getSummary(@Body() request: RequestDto): Promise<ResponseDto> {
+    return await this.summarizeService.getSummary(request);
   }
 }

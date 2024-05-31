@@ -13,12 +13,14 @@ then
 	npm install --save-dev eslint @typescript-eslint/parser @typescript-eslint/eslint-plugin
 	npm install --save-dev prettier
 	npm install --save-dev eslint-config-prettier eslint-plugin-prettier
+	npm install axios openai cheerio youtube-transcript he
 fi
 
 if [ "$BUILD_TYPE" = "Prod" ]; 
 then 
 	npm install
 	npm install class-validator class-transformer
+	npm install axios openai cheerio youtube-transcript he
 	npm build
   npm run start:prod
 else 

@@ -1,43 +1,238 @@
+<!-- TODO: add a login page -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>Summarize</title>
+	<style>
+		html, body {
+			height: 100vh;
+			margin: 0;
+			padding: 0;
+			font-family: Arial, Helvetica, sans-serif;
+		}
+		h1 {
+			margin: 0;
+			padding: 25px;
+		}
+		body {
+			display: flex;
+  		flex-direction: column;
+  		align-items: center;
+		}
+		form {
+			display: flex;
+  		flex-direction: column;
+  		align-items: center;
+		}
+		label {
+			display: block;
+			margin-bottom: 0;
+			width: 100%;
+		}
+		input, select, textarea {
+			width: 100%;
+		}
+		textarea {
+			height: 100px;
+		}
+		button {
+			width: 200px;
+			cursor: pointer;
+		}
+		.form-container {
+			width: 1000px;
+			display: flex;
+			justify-content: start;
+		}
+		.column {
+			width: 500px;
+			margin: 0 50px;
+		}
+		.column h2 {
+			margin-top: 0;
+		}
+		.submit-container {
+			width: 1000px;
+			display: flex;
+			justify-content: center;
+			margin-top: 20px;
+		}
+		.slider-container {
+			width: 100%;
+		}
+		.slider {
+			-webkit-appearance: none;
+			width: 100%;
+			height: 10px;
+			background: #d3d3d3;
+			border-radius: 10px;
+			outline: none;
+			opacity: 0.7;
+			-webkit-transition: .2s;
+			transition: opacity .2s;
+			cursor: pointer;
+		}
+		.slider:hover {
+			opacity: 1;
+		}
+		.slider::-webkit-slider-thumb {
+			-webkit-appearance: none;
+			appearance: none;
+			width: 20px;
+			height: 20px;
+			/* background: #4CAF50; */
+			cursor: pointer;
+			border-radius: 50%;
+		}
+		.slider::-moz-range-thumb {
+			width: 20px;
+			height: 20px;
+			/* background: #4CAF50; */
+			cursor: pointer;
+			border-radius: 50%;
+		}
+		.slider-labels {
+			display: flex;
+			justify-content: space-between;
+		}
+		.details-information {
+			height: 90px;
+			background: #d3d3d3;
+			margin-top: 10px;
+			border-radius: 10px;
+			padding: 10px;
+		}
+		.details-label, .details-description {
+			margin: 0;
+			font-size: 0.9rem;
+		}
+		.details-label {
+			margin-bottom: 5px;
+		}
+		.response-container {
+			width: 1000px;
+			max-height: 600px;
+			margin: 20px 0;
+			cursor: text;
+		}
+		.response-container p {
+			margin: 0;
+			padding: 0 50px;
+		}
+		.errors {
+			text-align: center;
+		}
+		@media screen and (max-width: 1100px) {
+			.form-container {
+				flex-direction: column;
+  			align-items: center;
+			}
+			.form-container, .submit-container, .response-container {
+				width: auto;
+			}
+			.column-1, .submit-container {
+				margin-bottom: 20px;
+			}
+			.response-container {
+				padding-bottom: 50px;
+			}
+		}
+	</style>
 </head>
 <body>
 	<h1>Summarize</h1>
 	<form id="apiForm">
-		<label for="api-key">Api key:</label>
-		<input type="text" id="api-key" name="api-key" autocomplete="on" autofocus required><br><br>
-
-		<label for="email">*Email:</label>
-		<input type="email" id="email" name="email" autocomplete="on"><br><br>
-
-		<label for="length">Summary length (number of words):</label>
-		<input type="number" id="length" name="length" value="300" min="20" max="2000" autocomplete="on" required><br><br>
-
-		<label for="expertise">Expertise:</label>
-		<textarea id="expertise" name="expertise" rows="3" cols="33" autocomplete="on" required></textarea><br><br>
-		
-		<label for="directive">Directive:</label>
-		<textarea id="directive" name="directive" rows="3" cols="33" autocomplete="on" required></textarea><br><br>
-
-		<label for="urls">Links (urls):</label>
-		<textarea id="urls" name="urls" rows="6" cols="33" required></textarea><br><br>
-
-		<button type="submit">Submit</button>
+		<div class="form-container">
+			<div class="column column-1">
+				<h2>1. OpenAI</h2>
+				<label for="api-key">Api key</label>
+				<input type="text" id="api-key" name="api-key" autocomplete="on" autofocus required>
+				<br><br>
+				<label for="model">Model</label>
+				<input type="text" id="model" name="model" autocomplete="on" value="gpt-3.5-turbo" placeholder="gpt-3.5-turbo" required>
+				<br><br>
+				<h2>2. General informations</h2>
+				<label for="language">Summary language</label>
+				<select type="text" id="language" name="language" required>
+					<option value="english" selected>English</option>
+					<option value="french">Français</option>
+				</select>
+				<br><br>
+				<label for="model">Details level</label>
+				<div class="slider-container">
+					<input type="range" id="details" class="slider" name="details" min="1" max="3" value="2" step="1" autocomplete="on" required>
+					<div class="slider-labels">
+						<span>1</span>
+						<span>2</span>
+						<span>3</span>
+					</div>
+					<div class="details-information">
+						<p id="details-label" class="details-label"></p>
+						<p id="details-description" class="details-description"></p>
+					</div>
+					<script>
+						const labels = [
+							"Brief summary",
+							"Concise summary",
+							"Detailed summary"
+						];
+						const descriptions = [
+							"Retain only the most critical and major information.",
+							"Capture the essential information and significant points, while omitting non-essential details and repetitive content.",
+							"Include all important information, examples, and nuances, avoiding unnecessary repetition."
+						];
+						const slider = document.getElementById("details");
+						const label = document.getElementById("details-label");
+						const description = document.getElementById("details-description");
+						label.innerText = labels[slider.value - 1];
+						description.innerText = descriptions[slider.value - 1];
+						slider.addEventListener("input", function() {
+								label.innerText = labels[this.value - 1];
+								description.innerText = descriptions[this.value - 1];
+						});
+					</script>
+				</div>
+				<br><br>
+				<label for="length">*Summary number of words</label>
+				<input type="number" id="length" name="length" value="" min="0" max="4000" placeholder="Leave empty to not specify" autocomplete="on">
+			</div>
+			<div class="column column-2">
+				<h2>3. Specific informations</h2>
+				<label for="expertise">*Expertise</label>
+				<label for="expertise">You are an expert in the field of: ["..."]</label>
+				<textarea id="expertise" name="expertise" maxlength="100" placeholder="Leave empty to not speficy" autocomplete="on"></textarea>
+				<br><br>
+				<label for="directive">*Directive</label>
+				<label for="directive">Your task is to write a summary on the subject of: ["..."]</label>
+				<textarea id="directive" name="directive" maxlength="200" placeholder="Leave empty to not speficy" autocomplete="on"></textarea>
+				<br><br>
+				<h2>4. Content to summarize</h2>
+				<label for="urls">Urls (can be web pages or youtube videos)</label>
+				<textarea id="urls" name="urls" required></textarea>
+				<br><br>
+			</div>
+		</div>
+		<div class="submit-container">
+			<!-- TODO: add a modal window with a loader -->
+    	<button type="submit">Submit</button> 
+  	</div>
 	</form>
-
-	<p id="response"></p>
-
+	<div class="response-container">
+		<p id="errors" class="errors"></p>
+		<p id="response" class="response"></p>
+		<!-- TODO: add button to copy response -->
+	</div>
 	<script>
 		document.getElementById('apiForm').addEventListener('submit', function(event) {
 			event.preventDefault();
 
 			const apiKey = document.getElementById('api-key').value;
-			const email = document.getElementById('email').value;
+			const model = document.getElementById('model').value;
+			const details = document.getElementById('details').value;
 			const length = document.getElementById('length').value;
+			const language = document.getElementById('language').value;
 			const expertise = document.getElementById('expertise').value;
 			const directive = document.getElementById('directive').value;
 			const urls = document.getElementById('urls').value;
@@ -45,12 +240,33 @@
 			const apiEndpoint = 'https://localhost:9443/summarize';
 			const data = {
 				apiKey: apiKey,
-				email: email,
+				model: model,
+				details: details,
 				length: length,
+				language: language,
 				expertise: expertise,
 				directive: directive,
 				urls: urls,
 			};
+
+			function displayErrors(errorsList) {
+				let text = 'Errors:\n';
+				errorsList.forEach(error => {
+					text += error + '\n';
+				});
+				return text + '\n\n';
+			}
+
+			function displaySummaries(summaryList) {
+				let text = 'Summaries:\n\n';
+				summaryList.forEach(url => {
+					text += url['url'] + '\n' + url['summary'] + '\n\n';
+				});
+				return text;
+			}
+
+			const errorsContainer = document.getElementById('errors');
+			const responseContainer = document.getElementById('response');
 			
 			fetch(apiEndpoint, {
 				method: 'POST',
@@ -60,17 +276,31 @@
 				body: JSON.stringify(data)
 			})
 			.then(response => response.json())
-			.then(data => {
+			.then(data => {				
 				console.log(data);
+				// TODO: instead of using innerText + '\n's use innerHtml or something to add children + text in order to formate the response
+				errorsContainer.innerText = '';
+				responseContainer.innerText = '';
+
 				if (data['summary'] === undefined) {
-					document.getElementById('response').innerText = 
+					errorsContainer.innerText = 
 						'Error: ' + data['message'] ?? 'something went wrong';
 				} else {
-					document.getElementById('response').innerText = data['summary'];
+					let text = '';
+					
+					if (data['errors'].length > 0)
+						text = displayErrors(data['errors']);
+					
+					text += `Summary:\n${data['summary']}`;
+
+					if (data['summaries'] !== undefined && data['summaries'].length > 1) 
+						text += `\n\n\n${displaySummaries(data['summaries'])}`
+
+					responseContainer.innerText = text;
 				}
 			})
 			.catch((error) => {
-				document.getElementById('response').innerText = 'Error: ' + error;
+				errorsContainer.innerText = 'Error: ' + error;
 			});
 		})
 	</script>
