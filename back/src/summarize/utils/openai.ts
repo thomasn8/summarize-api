@@ -2,6 +2,7 @@ import { RequestDto } from '../../summarize/dto/request.dto';
 import { UrlParsed, Chat } from '../types/summarize.types';
 import OpenAI from 'openai';
 
+// TODO: refactor this function to remove the undefined types in arguments
 export async function summarizeInOneChunk(
   request: RequestDto,
   openai: Chat,
@@ -15,7 +16,7 @@ export async function summarizeInOneChunk(
   systemMessage += getLanguagePart(request.language) + '\n';
   systemMessage += getLengthPart(request.length ?? undefined) + '\n';
   systemMessage += getDisclaimerPart();
-  const userMessage = `Text to summarize:\n\`\`\`${url !== undefined ? url.chunks[0] : text}\`\`\``; // TODO: rewrite better
+  const userMessage = `Text to summarize:\n\`\`\`${url !== undefined ? url.chunks[0] : text}\`\`\``;
   return await askChatGpt(openai, systemMessage, userMessage);
 }
 

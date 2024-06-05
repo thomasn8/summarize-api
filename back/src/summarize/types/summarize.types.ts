@@ -17,7 +17,6 @@ export interface UrlParsed {
 export interface Chat {
   openai: OpenAI;
   contextWindow?: number;
-  maxChunkLength: number;
   model: OpenAI.Chat.ChatModel;
 }
 

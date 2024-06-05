@@ -1,24 +1,23 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { RequestDto } from './dto/request.dto';
+import { ResponseDto } from './dto/response.dto';
 import { UrlParsed, Chat } from './types/summarize.types';
 import { isInvalidUrl } from '../summarize/utils/urls';
 import { getChunks } from '../summarize/utils/tokens';
-import axios from 'axios';
-import { YoutubeTranscript } from 'youtube-transcript';
-import * as he from 'he';
-import OpenAI from 'openai';
-import { ResponseDto } from './dto/response.dto';
 import {
   summarizeInOneChunk,
   summarizeInSeveralChunks,
   summarizeAll
 } from './utils/openai';
+import axios from 'axios';
+import { YoutubeTranscript } from 'youtube-transcript';
+import * as he from 'he';
+import OpenAI from 'openai';
 
 @Injectable()
 export class SummarizeService {
   public async getSummary(request: RequestDto): Promise<ResponseDto> {
     const urls = this.parseUrls(request.urls);
-
     const openai = await this.getOpenAiInstance(request);
 
     await Promise.all(
@@ -103,18 +102,17 @@ export class SummarizeService {
         apiKey: request.apiKey
       });
 
-      // this is used to test if the model name exist
-      await openai.models.retrieve(request.model); // Note: this give no information about the token context window
+      // This is used to test if the model name exist (doesn't give informations about the token context window)
+      await openai.models.retrieve(request.model);
 
       // TODO: find a way to get openai model context
       const contextWindow = request.model.startsWith('gpt-3.5-turbo')
         ? 16385
         : 4096;
-      const maxChunkLength = Math.floor(contextWindow / 5);
+
       return {
         openai: openai,
         contextWindow: contextWindow,
-        maxChunkLength: maxChunkLength,
         model: request.model as OpenAI.Chat.ChatModel
       };
     } catch (error) {
