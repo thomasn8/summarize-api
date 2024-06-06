@@ -74,6 +74,8 @@ async function askChatGpt(
     { role: 'user', content: userMessage }
   ];
 
+  console.log(systemMessage);
+
   const chatCompletion = await chat.openai.chat.completions.create({
     messages: messages,
     model: chat.model

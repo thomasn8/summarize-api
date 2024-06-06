@@ -43,6 +43,18 @@ export class SummarizeService {
       })
     );
 
+    // throw new Error();
+
+    // return {
+    //   summary: 'test',
+    //   // summaries: [
+    //   //   { url: 'google.com', summary: 'sum 1' },
+    //   //   { url: 'google.com', summary: 'sum 2' }
+    //   // ],
+    //   // errors: ['error1', 'error2']
+    //   errors: []
+    // };
+
     await Promise.all(
       urls.map(async (url) => {
         if (!url.chunks || url.chunks.length === 0) return;
