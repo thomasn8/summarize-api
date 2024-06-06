@@ -25,7 +25,7 @@ export class RequestDto {
 
   @IsOptional()
   @IsNumber()
-  @Max(4000)
+  @Max(10000)
   @Min(0)
   length?: number;
 
