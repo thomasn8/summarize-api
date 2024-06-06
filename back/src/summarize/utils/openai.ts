@@ -1,23 +1,23 @@
 import { RequestDto } from '../../summarize/dto/request.dto';
-import { UrlParsed, Chat } from '../types/summarize.types';
+import {
+  UrlParsed,
+  Chat,
+  DefinitiveSummarization
+} from '../types/summarize.types';
 import OpenAI from 'openai';
 
-// TODO: refactor this function to remove the undefined types in arguments
 export async function summarizeInOneChunk(
-  request: RequestDto,
-  openai: Chat,
-  url: UrlParsed | undefined,
-  text: string | undefined
+  ds: DefinitiveSummarization
 ): Promise<string> {
   let systemMessage = '';
-  systemMessage += getExpertisePart(request.expertise ?? undefined) + '\n';
-  systemMessage += getDirectivePart(request.directive ?? undefined) + '\n';
-  systemMessage += getDetailsPart(request.details - 1) + '\n';
-  systemMessage += getLanguagePart(request.language) + '\n';
-  systemMessage += getLengthPart(request.length ?? undefined) + '\n';
+  systemMessage += getExpertisePart(ds.request.expertise ?? undefined) + '\n';
+  systemMessage += getDirectivePart(ds.request.directive ?? undefined) + '\n';
+  systemMessage += getDetailsPart(ds.request.details - 1) + '\n';
+  systemMessage += getLanguagePart(ds.request.language) + '\n';
+  systemMessage += getLengthPart(ds.request.length ?? undefined) + '\n';
   systemMessage += getDisclaimerPart();
-  const userMessage = `Text to summarize:\n\`\`\`${url !== undefined ? url.chunks[0] : text}\`\`\``;
-  return await askChatGpt(openai, systemMessage, userMessage);
+  const userMessage = `Text to summarize:\n\`\`\`${ds.textToSummarize}\`\`\``;
+  return await askChatGpt(ds.openai, systemMessage, userMessage);
 }
 
 export async function summarizeInSeveralChunks(
@@ -44,7 +44,11 @@ export async function summarizeInSeveralChunks(
   const chunksSummariesJoined = chunkSummariesList
     .map((chunk) => chunk.chunkSummary)
     .join('\n');
-  return summarizeInOneChunk(request, openai, undefined, chunksSummariesJoined);
+  return summarizeInOneChunk({
+    request: request,
+    openai: openai,
+    textToSummarize: chunksSummariesJoined
+  });
 }
 
 export async function summarizeAll(
@@ -53,7 +57,11 @@ export async function summarizeAll(
   urls: UrlParsed[]
 ): Promise<string> {
   const urlsSummariesJoined = urls.map((url) => url.summary).join('\n');
-  return summarizeInOneChunk(request, openai, undefined, urlsSummariesJoined);
+  return summarizeInOneChunk({
+    request: request,
+    openai: openai,
+    textToSummarize: urlsSummariesJoined
+  });
 }
 
 async function askChatGpt(

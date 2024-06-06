@@ -1,3 +1,4 @@
+import { RequestDto } from '../dto/request.dto';
 import { AxiosResponse } from 'axios';
 import OpenAI from 'openai';
 
@@ -32,4 +33,10 @@ export interface MetaDatas {
 export interface Summaries {
   url: string;
   summary: string;
+}
+
+export interface DefinitiveSummarization {
+  request: RequestDto;
+  openai: Chat;
+  textToSummarize: string;
 }

@@ -49,7 +49,11 @@ export class SummarizeService {
         try {
           url.summary =
             url.chunks.length === 1
-              ? await summarizeInOneChunk(request, openai, url, undefined)
+              ? await summarizeInOneChunk({
+                  request: request,
+                  openai: openai,
+                  textToSummarize: url.chunks[0]
+                })
               : await summarizeInSeveralChunks(request, openai, url);
         } catch (error) {
           url.errors.push(
@@ -137,8 +141,8 @@ export class SummarizeService {
     }
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   private async getDynamicWebPageContent(url: UrlParsed): Promise<string> {
-    url;
     // TODO: implement
     return '';
   }
