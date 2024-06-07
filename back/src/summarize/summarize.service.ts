@@ -18,6 +18,7 @@ import axios from 'axios';
 import { YoutubeTranscript } from 'youtube-transcript';
 import * as he from 'he';
 import OpenAI from 'openai';
+import { writeToFile } from './utils/file';
 
 @Injectable()
 export class SummarizeService {
@@ -26,12 +27,12 @@ export class SummarizeService {
     if (request.urls === undefined && request.query === undefined)
       throw new HttpException('No content', HttpStatus.BAD_REQUEST);
 
+    const openai = await this.getOpenAiInstance(request);
+
     const urls =
       request.requestType === 'urls'
         ? this.parseUrls(request.urls)
-        : await this.parseQuery(request.query);
-
-    const openai = await this.getOpenAiInstance(request);
+        : await this.parseQuery(request.query, openai.contextWindow);
 
     if (request.requestType === 'urls') {
       await Promise.all(
@@ -115,7 +116,10 @@ export class SummarizeService {
     throw new HttpException('Invalid urls', HttpStatus.BAD_REQUEST);
   }
 
-  private async parseQuery(text: string): Promise<UrlParsed[]> {
+  private async parseQuery(
+    text: string,
+    contextWindow: number
+  ): Promise<UrlParsed[]> {
     try {
       const response = await (
         await fetch('https://s.jina.ai/ ' + text, {
@@ -123,12 +127,15 @@ export class SummarizeService {
         })
       ).text();
 
+      // console.log(response);
+      // writeToFile('./webscraping-response', response);
+
       return [
         {
           url: 'https://s.jina.ai/ ' + text,
           contentType: 'WebPage',
           webPage: 'Jina',
-          chunks: [response],
+          chunks: await getChunks(response, contextWindow),
           errors: []
         }
       ];
