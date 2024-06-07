@@ -3,13 +3,12 @@ import { AxiosResponse } from 'axios';
 import OpenAI from 'openai';
 
 export type UrlContentType = 'WebPage' | 'YoutubeVideo';
-export type WebPage = 'Static' | 'Dynamic';
+export type WebPage = 'Static' | 'Dynamic' | 'Jina';
 export interface UrlParsed {
   url: string;
   contentType: UrlContentType;
   axiosResponse?: AxiosResponse;
   webPage?: WebPage;
-  metaDatas?: MetaDatas;
   chunks?: string[];
   summary?: string;
   errors: string[];

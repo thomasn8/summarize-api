@@ -1,4 +1,9 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import {
+  HttpException,
+  HttpStatus,
+  Injectable,
+  InternalServerErrorException
+} from '@nestjs/common';
 import { RequestDto } from './dto/request.dto';
 import { ResponseDto } from './dto/response.dto';
 import { UrlParsed, Chat } from './types/summarize.types';
@@ -16,52 +21,42 @@ import OpenAI from 'openai';
 
 @Injectable()
 export class SummarizeService {
-  // Add some logs in a file a somehow
+  // TODO: add logs (jina request, openai requests, etc)to a file a somehow
   public async getSummary(request: RequestDto): Promise<ResponseDto> {
     if (request.urls === undefined && request.query === undefined)
-      throw new HttpException('No content received', HttpStatus.BAD_REQUEST);
+      throw new HttpException('No content', HttpStatus.BAD_REQUEST);
 
     const urls =
       request.requestType === 'urls'
         ? this.parseUrls(request.urls)
         : await this.parseQuery(request.query);
-    throw new Error();
+
     const openai = await this.getOpenAiInstance(request);
 
-    await Promise.all(
-      urls.map(async (url) => {
-        try {
-          url.axiosResponse = await axios.get(url.url);
-          // TODO: differentiate between static webpage content (simple, use cheerio) and dynamic webpage content (use Puppeteer or Playwright)
-          if (url.contentType === 'WebPage') {
-            const text =
-              url.webPage && url.webPage === 'Dynamic'
-                ? await this.getDynamicWebPageContent(url)
-                : await this.getStaticWebPageContent(url);
-            url.chunks = await getChunks(text, openai.contextWindow);
-          } else {
-            const text = await this.getTranscriptContent(url);
-            url.chunks = await getChunks(text, openai.contextWindow);
+    if (request.requestType === 'urls') {
+      await Promise.all(
+        urls.map(async (url) => {
+          try {
+            url.axiosResponse = await axios.get(url.url);
+            // TODO: differentiate between static webpage content (simple, use cheerio) and dynamic webpage content (use Puppeteer or Playwright)
+            if (url.contentType === 'WebPage') {
+              const text =
+                url.webPage && url.webPage === 'Dynamic'
+                  ? await this.getDynamicWebPageContent(url)
+                  : await this.getStaticWebPageContent(url);
+              url.chunks = await getChunks(text, openai.contextWindow);
+            } else {
+              const text = await this.getTranscriptContent(url);
+              url.chunks = await getChunks(text, openai.contextWindow);
+            }
+
+            if (url.chunks.length === 0) throw new Error();
+          } catch (error) {
+            url.errors.push(`Error: content not available for the url ${url}`);
           }
-
-          if (url.chunks.length === 0) throw new Error();
-        } catch (error) {
-          url.errors.push(`Error: content not available for the url ${url}`);
-        }
-      })
-    );
-
-    // throw new Error();
-
-    // return {
-    //   summary: 'test',
-    //   // summaries: [
-    //   //   { url: 'google.com', summary: 'sum 1' },
-    //   //   { url: 'google.com', summary: 'sum 2' }
-    //   // ],
-    //   // errors: ['error1', 'error2']
-    //   errors: []
-    // };
+        })
+      );
+    }
 
     await Promise.all(
       urls.map(async (url) => {
@@ -121,8 +116,25 @@ export class SummarizeService {
   }
 
   private async parseQuery(text: string): Promise<UrlParsed[]> {
-    text;
-    return [];
+    try {
+      const response = await (
+        await fetch('https://s.jina.ai/ ' + text, {
+          method: 'GET'
+        })
+      ).text();
+
+      return [
+        {
+          url: 'https://s.jina.ai/ ' + text,
+          contentType: 'WebPage',
+          webPage: 'Jina',
+          chunks: [response],
+          errors: []
+        }
+      ];
+    } catch (error) {
+      throw new InternalServerErrorException();
+    }
   }
 
   private async getOpenAiInstance(request: RequestDto): Promise<Chat> {
@@ -166,9 +178,9 @@ export class SummarizeService {
     }
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   private async getDynamicWebPageContent(url: UrlParsed): Promise<string> {
     // TODO: implement
+    url;
     return '';
   }
 

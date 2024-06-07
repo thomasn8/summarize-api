@@ -50,7 +50,7 @@ export class RequestDto {
 
   @IsOptional()
   @IsString()
-  @MaxLength(600)
+  @MaxLength(200)
   query: string | undefined;
 
   @IsOptional()

@@ -74,7 +74,7 @@ async function askChatGpt(
     { role: 'user', content: userMessage }
   ];
 
-  console.log(systemMessage);
+  // console.log(systemMessage);
 
   const chatCompletion = await chat.openai.chat.completions.create({
     messages: messages,
@@ -113,7 +113,7 @@ function getLanguagePart(language: string): string {
 
 function getLengthPart(length: number | undefined): string {
   return length && length > 0
-    ? `You summary must be ${length} words long.`
+    ? `Your summary must be ${length} words long.`
     : '';
 }
 

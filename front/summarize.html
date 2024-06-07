@@ -1,7 +1,8 @@
 <!-- TODO: add a login page -->
+<!-- TODO: style -->
+<!-- TODO: responsiv -->
 <!-- TODO: check security about the api-key, should encrypt ? -->
 <!-- TODO: cache request + response and if they are there is 2 consecutives request, return the cached response -->
-<!-- TODO: add functionnality to make request based on a search string instead or urls: https://jina.ai/reader/ -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -19,8 +20,7 @@
 			box-sizing: border-box;
 		}
 		h1 {
-			margin: 0;
-			padding: 25px;
+			margin: 30px 0;
 		}
 		body {
 			display: flex;
@@ -28,6 +28,7 @@
   		align-items: center;
 		}
 		form {
+			margin: 30px 0;
 			display: flex;
   		flex-direction: column;
   		align-items: center;
@@ -59,6 +60,15 @@
 		}
 		.column h2 {
 			margin-top: 0;
+		}
+		section.small-height{
+			height: 200px;
+		}
+		section.big-height{
+			height: 375px;
+		}
+		.input-container {
+			margin-bottom: 15px;
 		}
 		.submit-container {
 			width: 1000px;
@@ -224,93 +234,129 @@
 	<form id="apiForm">
 		<div class="form-container">
 			<div class="column column-1">
-				<h2>1. OpenAI</h2>
-				<label for="api-key">Api key</label>
-				<input type="text" id="api-key" name="api-key" autocomplete="on" autofocus required>
-				<br><br>
-				<label for="model">Model</label>
-				<input type="text" id="model" name="model" autocomplete="on" value="gpt-3.5-turbo" placeholder="gpt-3.5-turbo" required>
-				<br><br>
-				<h2>2. General informations</h2>
-				<label for="language">Summary language</label>
-				<select type="text" id="language" name="language" required>
-					<option value="english" selected>English</option>
-					<option value="french">Français</option>
-				</select>
-				<br><br>
-				<label for="model">Details level</label>
-				<div class="slider-container">
-					<input type="range" id="details" class="slider" name="details" min="1" max="3" value="2" step="1" autocomplete="on" required>
-					<div class="slider-labels">
-						<span>1</span>
-						<span>2</span>
-						<span>3</span>
+				<section class="small-height">
+					<h2>1. OpenAI</h2>
+					<div class="input-container apikey-container">
+						<label for="api-key">1.1 Api key</label>
+						<input type="text" id="api-key" name="api-key" autocomplete="on" autofocus required>
 					</div>
-					<div class="details-information">
-						<p id="details-label" class="details-label"></p>
-						<p id="details-description" class="details-description"></p>
+					<div class="input-container model-container">
+						<label for="model">1.2 Model</label>
+						<input type="text" id="model" name="model" autocomplete="on" value="gpt-3.5-turbo" placeholder="gpt-3.5-turbo" required>
 					</div>
-					<script>
-						const labels = [
-							"Brief summary",
-							"Concise summary",
-							"Detailed summary"
-						];
-						const descriptions = [
-							"Retain only the most critical and major information.",
-							"Capture the essential information and significant points, while omitting non-essential details and repetitive content.",
-							"Include all important information, examples, and nuances, avoiding unnecessary repetition."
-						];
-						const slider = document.getElementById("details");
-						const label = document.getElementById("details-label");
-						const description = document.getElementById("details-description");
-						label.innerText = labels[slider.value - 1];
-						description.innerText = descriptions[slider.value - 1];
-						slider.addEventListener("input", function() {
-								label.innerText = labels[this.value - 1];
-								description.innerText = descriptions[this.value - 1];
-						});
-					</script>
+				</section>
+				<section class="big-height">
+					<h2>2. General informations</h2>
+					<div class="input-container length-container">
+						<label for="language">2.1 Summary language</label>
+						<select type="text" id="language" name="language" required>
+							<option value="english" selected>English</option>
+							<option value="french">Français</option>
+						</select>				
+					</div>
+					<div class="input-container slider-container">
+						<label for="model">2.2 Details level</label>
+						<input type="range" id="details" class="slider" name="details" min="1" max="3" value="2" step="1" autocomplete="on" required>
+						<div class="slider-labels">
+							<span>1</span>
+							<span>2</span>
+							<span>3</span>
+						</div>
+						<div class="details-information">
+							<p id="details-label" class="details-label"></p>
+							<p id="details-description" class="details-description"></p>
+						</div>
+						<script>
+							const labels = [
+								"Brief summary",
+								"Concise summary",
+								"Detailed summary"
+							];
+							const descriptions = [
+								"Retain only the most critical and major information.",
+								"Capture the essential information and significant points, while omitting non-essential details and repetitive content.",
+								"Include all important information, examples, and nuances, avoiding unnecessary repetition."
+							];
+							const slider = document.getElementById("details");
+							const label = document.getElementById("details-label");
+							const description = document.getElementById("details-description");
+							label.innerText = labels[slider.value - 1];
+							description.innerText = descriptions[slider.value - 1];
+							slider.addEventListener("input", function() {
+									label.innerText = labels[this.value - 1];
+									description.innerText = descriptions[this.value - 1];
+							});
+						</script>
+					</div>
+					<div class="input-container length-container">
+						<label for="length">2.3 *Summary number of words</label>
+						<input type="number" id="length" name="length" value="" min="0" max="10000" placeholder="Leave empty to not specify" autocomplete="on">
+					</div>
 				</div>
-				<br><br>
-				<label for="length">*Summary number of words</label>
-				<input type="number" id="length" name="length" value="" min="0" max="10000" placeholder="Leave empty to not specify" autocomplete="on">
-			</div>
+			</section>
 			<div class="column column-2">
-				<h2>3. Specific informations</h2>
-				<label for="expertise">*Expertise</label>
-				<label for="expertise">You are an expert in the field of: ["..."]</label>
-				<textarea id="expertise" name="expertise" maxlength="100" placeholder="Leave empty to not speficy" autocomplete="on"></textarea>
-				<br><br>
-				<label for="directive">*Directive</label>
-				<label for="directive">Your task is to write a summary on the subject of: ["..."]</label>
-				<textarea id="directive" name="directive" maxlength="200" placeholder="Leave empty to not speficy" autocomplete="on"></textarea>
-				<br><br>
-				<h2>4. Content to summarize</h2>
-				<div class="tabs">
-					<input id="tab1" class="radio-tab" type="radio" name="request-type" value="query" checked>
-					<label for="tab1">Query</label>
-					<input id="tab2" class="radio-tab" type="radio" name="request-type" value="urls">
-					<label for="tab2">Urls</label>
-				</div>
-				<script>
-				</script>
-				<textarea id="content" name="content" placeholder="" required></textarea>
-				<script>
-					function updatePlaceholder() {
-						const textarea = document.getElementById('content');
-						const selectedRadio = document.querySelector('input[name="request-type"]:checked');
-						if (selectedRadio.value === 'query')
-							textarea.placeholder = 'What are the 7 wonders of the world and their characteristics?';
-						else
-							textarea.placeholder = 'https://fr.wikipedia.org/wiki/Sept_Merveilles_du_monde\n\nhttps://en.wikipedia.org/wiki/Seven_Wonders_of_the_Ancient_World';
-					}
+				<section class="small-height">
+					<h2>3. Content to summarize</h2>
+					<div class="input-container content-container">
+						<div class="tabs">
+							<input id="tab1" class="radio-tab" type="radio" name="request-type" value="query" checked>
+							<label for="tab1">Topic</label>
+							<input id="tab2" class="radio-tab" type="radio" name="request-type" value="urls">
+							<label for="tab2">Urls</label>
+						</div>
+						<script>
+						</script>
+						<textarea id="content" name="content" placeholder="" required></textarea>
+						<script>
+							const valuesMemorized = init(
+								document.getElementById('content'),
+								document.querySelector('input[name="request-type"]:checked')
+							);
 
-					updatePlaceholder();
+							document.querySelectorAll('input[name="request-type"]').forEach(radio => radio.addEventListener('change', function(event) {
+								const textarea = document.getElementById('content');
+								const selectedRadio = document.querySelector('input[name="request-type"]:checked');
+								update(textarea, selectedRadio, valuesMemorized);
+							}));
+							
+							function init(textarea, selectedRadio) {
+								// init placeholder
+								if (selectedRadio.value === 'query') 
+									textarea.placeholder = 'The 7 wonders of the world and their characteristics';
+								else
+									textarea.placeholder = 'https://fr.wikipedia.org/wiki/Sept_Merveilles_du_monde';
 
-					document.querySelectorAll('input[name="request-type"]').forEach(radio =>radio.addEventListener('change', updatePlaceholder));
-				</script>
-				<br><br>
+								// init tab values
+								return ['', ''];
+							}
+							
+							function update(textarea, selectedRadio, valuesMemorized) {
+								if (selectedRadio.value === 'query') {
+									valuesMemorized[0] = textarea.value;
+									textarea.value = valuesMemorized[1];
+									textarea.placeholder = 'The 7 wonders of the world and their characteristics';
+								}
+								else {
+									valuesMemorized[1] = textarea.value;
+									textarea.value = valuesMemorized[0];
+									textarea.placeholder = 'https://fr.wikipedia.org/wiki/Sept_Merveilles_du_monde';
+								}
+								return valuesMemorized;
+							}
+						</script>
+					</div>
+				</section>
+				<section class="big-height">
+					<h2>4. *Specific informations</h2>
+					<div class="input-container expertise-container">
+						<label for="expertise">4.1 *Expertise<br>You are an expert in the field of: ["..."]</label>
+						<textarea id="expertise" name="expertise" maxlength="100" placeholder="Leave empty to not speficy" autocomplete="on"></textarea>
+					</div>
+					<div class="input-container directive-container">
+						<label for="directive">4.2 *Directive<br>Your task is to write a summary on the subject of: ["..."]</label>
+						<textarea id="directive" name="directive" maxlength="200" placeholder="Leave empty to not speficy" autocomplete="on"></textarea>
+					</div>
+				</section>
 			</div>
 		</div>
 		<div class="submit-container">
