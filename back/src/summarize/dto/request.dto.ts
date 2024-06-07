@@ -46,5 +46,14 @@ export class RequestDto {
 
   @IsNotEmpty()
   @IsString()
-  urls: string;
+  requestType: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(600)
+  query: string | undefined;
+
+  @IsOptional()
+  @IsString()
+  urls: string | undefined;
 }

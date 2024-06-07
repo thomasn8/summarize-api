@@ -16,8 +16,16 @@ import OpenAI from 'openai';
 
 @Injectable()
 export class SummarizeService {
+  // Add some logs in a file a somehow
   public async getSummary(request: RequestDto): Promise<ResponseDto> {
-    const urls = this.parseUrls(request.urls);
+    if (request.urls === undefined && request.query === undefined)
+      throw new HttpException('No content received', HttpStatus.BAD_REQUEST);
+
+    const urls =
+      request.requestType === 'urls'
+        ? this.parseUrls(request.urls)
+        : await this.parseQuery(request.query);
+    throw new Error();
     const openai = await this.getOpenAiInstance(request);
 
     await Promise.all(
@@ -110,6 +118,11 @@ export class SummarizeService {
       );
     if (urlsParsed.length > 0) return urlsParsed;
     throw new HttpException('Invalid urls', HttpStatus.BAD_REQUEST);
+  }
+
+  private async parseQuery(text: string): Promise<UrlParsed[]> {
+    text;
+    return [];
   }
 
   private async getOpenAiInstance(request: RequestDto): Promise<Chat> {

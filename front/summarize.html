@@ -15,6 +15,9 @@
 			padding: 0;
 			font-family: Arial, Helvetica, sans-serif;
 		}
+		html * {
+			box-sizing: border-box;
+		}
 		h1 {
 			margin: 0;
 			padding: 25px;
@@ -39,6 +42,7 @@
 		}
 		textarea {
 			height: 100px;
+			resize: none;
 		}
 		button {
 			width: 200px;
@@ -100,7 +104,7 @@
 		}
 		.details-information {
 			height: 90px;
-			background: #d3d3d3;
+			background: #e0e0e0;
 			margin-top: 10px;
 			border-radius: 10px;
 			padding: 10px;
@@ -111,6 +115,29 @@
 		}
 		.details-label {
 			margin-bottom: 5px;
+		}
+		.tabs {
+			width: 100%;
+			display: flex;
+			justify-content: start;
+		}
+		.tabs input {
+			display: none;
+		}
+		.tabs label {
+			width: 50%;
+			text-align: center;
+			border: none;
+		}
+		.tabs label:before {
+			margin-right: 10px;
+		}
+		.tabs label:hover {
+			cursor: pointer;
+		}
+		.tabs input:checked + label {
+			background: #e0e0e0;
+			border: none;
 		}
 		.modal {
 			display: none;
@@ -260,8 +287,29 @@
 				<textarea id="directive" name="directive" maxlength="200" placeholder="Leave empty to not speficy" autocomplete="on"></textarea>
 				<br><br>
 				<h2>4. Content to summarize</h2>
-				<label for="urls">Urls (can be web pages or youtube videos)</label>
-				<textarea id="urls" name="urls" required></textarea>
+				<div class="tabs">
+					<input id="tab1" class="radio-tab" type="radio" name="request-type" value="query" checked>
+					<label for="tab1">Query</label>
+					<input id="tab2" class="radio-tab" type="radio" name="request-type" value="urls">
+					<label for="tab2">Urls</label>
+				</div>
+				<script>
+				</script>
+				<textarea id="content" name="content" placeholder="" required></textarea>
+				<script>
+					function updatePlaceholder() {
+						const textarea = document.getElementById('content');
+						const selectedRadio = document.querySelector('input[name="request-type"]:checked');
+						if (selectedRadio.value === 'query')
+							textarea.placeholder = 'What are the 7 wonders of the world and their characteristics?';
+						else
+							textarea.placeholder = 'https://fr.wikipedia.org/wiki/Sept_Merveilles_du_monde\n\nhttps://en.wikipedia.org/wiki/Seven_Wonders_of_the_Ancient_World';
+					}
+
+					updatePlaceholder();
+
+					document.querySelectorAll('input[name="request-type"]').forEach(radio =>radio.addEventListener('change', updatePlaceholder));
+				</script>
 				<br><br>
 			</div>
 		</div>
@@ -289,7 +337,8 @@
 			const language = document.getElementById('language').value;
 			const expertise = document.getElementById('expertise').value;
 			const directive = document.getElementById('directive').value;
-			const urls = document.getElementById('urls').value;
+			const requestType = document.querySelector('input[name="request-type"]:checked').value;
+			const content = document.getElementById('content').value;
 
 			const apiEndpoint = 'https://localhost:9443/summarize';
 			const data = {
@@ -300,7 +349,9 @@
 				language: language,
 				expertise: expertise,
 				directive: directive,
-				urls: urls,
+				requestType: requestType,
+				query: requestType === 'query' ? content : undefined,
+				urls: requestType === 'urls' ? content : undefined
 			};
 
 			function showModal() {
