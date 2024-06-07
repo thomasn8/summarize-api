@@ -18,7 +18,6 @@ import axios from 'axios';
 import { YoutubeTranscript } from 'youtube-transcript';
 import * as he from 'he';
 import OpenAI from 'openai';
-import { writeToFile } from './utils/file';
 
 @Injectable()
 export class SummarizeService {
@@ -127,8 +126,7 @@ export class SummarizeService {
         })
       ).text();
 
-      // console.log(response);
-      // writeToFile('./webscraping-response', response);
+      //TODO: parse the urls founds and add a field to these url
 
       return [
         {
