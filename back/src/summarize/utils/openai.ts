@@ -5,6 +5,7 @@ import {
   DefinitiveSummarization
 } from '../types/summarize.types';
 import OpenAI from 'openai';
+import { getIndexOfUniqueSummary } from '../utils/get-index-of-unique-summary';
 
 export async function summarizeInOneChunk(
   ds: DefinitiveSummarization
@@ -56,6 +57,9 @@ export async function summarizeAll(
   openai: Chat,
   urls: UrlParsed[]
 ): Promise<string> {
+  const i = getIndexOfUniqueSummary(urls);
+  if (i !== undefined) return urls[i].summary;
+
   const urlsSummariesJoined = urls.map((url) => url.summary).join('\n');
   return summarizeInOneChunk({
     request: request,
@@ -74,7 +78,7 @@ async function askChatGpt(
     { role: 'user', content: userMessage }
   ];
 
-  // console.log(systemMessage);
+  console.log(systemMessage);
 
   const chatCompletion = await chat.openai.chat.completions.create({
     messages: messages,

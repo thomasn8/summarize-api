@@ -1,8 +1,7 @@
-<!-- TODO: add a login page -->
-<!-- TODO: style -->
-<!-- TODO: responsiv -->
 <!-- TODO: check security about the api-key, should encrypt ? -->
 <!-- TODO: cache request + response and if they are there is 2 consecutives request, return the cached response -->
+<!-- TODO: style -->
+<!-- TODO: responsiv -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -179,6 +178,9 @@
 		.modal-summaries p, .modal-errors p{
 			margin: 4px 0;
 			opacity: 0.75;
+		}
+		.modal-summaries .single-summary {
+			margin-bottom: 10px;
 		}
 		.modal-errors p{
 			color: red;
@@ -432,7 +434,7 @@
 				let summaries = '';
 				if (data['summaries'] !== undefined && data['summaries'].length > 1) {
 					data['summaries'].forEach(url => {
-						summaries += `<div><p>url: ${url['url']}</p><p>${url['summary']}</p></div>`;
+						summaries += `<div class="single-summary"><p>url: ${url['url']}</p><p>${url['summary']}</p></div>`;
 					});
 				}
 
@@ -447,9 +449,10 @@
 				modalBody.innerHTML = `<div class="modal-summary"><h3>Summary</h3><p id="text-summary">${data['summary']}</p></div>`;
 				if (data['summary'] !== undefined && data['summary'].startsWith('Error') === false)
 					modalBody.innerHTML += '<div class="copy"><button id="copyBtn">Copy to clipboard</button></div>'
-				if (summaries.length > 0) 
-					modalBody.innerHTML += `<div class="modal-summaries"><h3>Summaries</h3>${summaries}</div>`;
-				if (errors.length > 0) 
+				
+				if (summaries.length > 0)
+					modalBody.innerHTML += `<div class="modal-summaries"><h3>Summaries by url</h3>${summaries}</div>`;
+				if (errors.length > 0)
 					modalBody.innerHTML += `<div class="modal-errors"><h3>Errors</h3><p>${errors}</p></div>`;
 
 				if (data['summary'] !== undefined && data['summary'].startsWith('Error') === false){

@@ -19,6 +19,8 @@ import { YoutubeTranscript } from 'youtube-transcript';
 import * as he from 'he';
 import OpenAI from 'openai';
 
+// TODO: check new techniques of webscraping (with ai ?) to replace usage of jina which may become chargeable in the future
+
 @Injectable()
 export class SummarizeService {
   // TODO: add logs (jina request, openai requests, etc)to a file a somehow
@@ -26,6 +28,7 @@ export class SummarizeService {
     if (request.urls === undefined && request.query === undefined)
       throw new HttpException('No content', HttpStatus.BAD_REQUEST);
 
+    // TODO: add possibility to use local llm (ollama) instead of passing by chatgpt
     const openai = await this.getOpenAiInstance(request);
 
     const urls =
@@ -33,26 +36,27 @@ export class SummarizeService {
         ? this.parseUrls(request.urls)
         : await this.parseQuery(request.query, openai.contextWindow);
 
+    console.log(request.requestType);
     if (request.requestType === 'urls') {
       await Promise.all(
         urls.map(async (url) => {
           try {
             url.axiosResponse = await axios.get(url.url);
             // TODO: differentiate between static webpage content (simple, use cheerio) and dynamic webpage content (use Puppeteer or Playwright)
-            if (url.contentType === 'WebPage') {
-              const text =
-                url.webPage && url.webPage === 'Dynamic'
+
+            const text =
+              url.contentType === 'WebPage'
+                ? url.webPage && url.webPage === 'Dynamic'
                   ? await this.getDynamicWebPageContent(url)
-                  : await this.getStaticWebPageContent(url);
+                  : await this.getStaticWebPageContent(url)
+                : await this.getTranscriptContent(url);
+
+            if (text !== undefined)
               url.chunks = await getChunks(text, openai.contextWindow);
-            } else {
-              const text = await this.getTranscriptContent(url);
-              url.chunks = await getChunks(text, openai.contextWindow);
-            }
 
             if (url.chunks.length === 0) throw new Error();
           } catch (error) {
-            url.errors.push(`Error: content not available for the url ${url}`);
+            url.errors.push(`Content not available for the url ${url.url}`);
           }
         })
       );
@@ -72,23 +76,35 @@ export class SummarizeService {
               : await summarizeInSeveralChunks(request, openai, url);
         } catch (error) {
           url.errors.push(
-            `Error: chatgpt could not generate a summary for the url ${url}`
+            `Chatgpt could not generate a summary for the url ${url.url}`
           );
         }
       })
     );
 
-    if (urls.length > 1) {
+    if (urls.some((url) => url.summary !== undefined)) {
       const overallSummary = await summarizeAll(request, openai, urls);
       return {
         summary: overallSummary,
-        summaries: urls.map((url) => {
-          return { url: url.url, summary: url.summary };
-        }),
+        summaries:
+          urls.length > 1
+            ? urls.map((url) => {
+                return {
+                  url: url.url,
+                  summary: url.summary ?? 'Error'
+                };
+              })
+            : undefined,
         errors: urls.map((url) => url.errors).flat()
       };
     }
-    return { summary: urls[0].summary, errors: urls[0].errors };
+
+    return {
+      summary: 'Error',
+      // summary: 'Summary not available',
+      // summary: undefined,
+      errors: urls.map((url) => url.errors).flat()
+    };
   }
 
   private parseUrls(text: string): UrlParsed[] {
@@ -119,6 +135,8 @@ export class SummarizeService {
     text: string,
     contextWindow: number
   ): Promise<UrlParsed[]> {
+    // TODO: if a url is found, throw an error
+
     try {
       const response = await (
         await fetch('https://s.jina.ai/ ' + text, {
@@ -126,7 +144,7 @@ export class SummarizeService {
         })
       ).text();
 
-      //TODO: parse the urls founds and add a field to these url
+      //TODO: parse the urls found and add a field to these url
 
       return [
         {
@@ -169,7 +187,9 @@ export class SummarizeService {
     }
   }
 
-  private async getStaticWebPageContent(url: UrlParsed): Promise<string> {
+  private async getStaticWebPageContent(
+    url: UrlParsed
+  ): Promise<string | undefined> {
     try {
       const response = await fetch('https://r.jina.ai/' + url.url, {
         method: 'GET'
@@ -177,31 +197,43 @@ export class SummarizeService {
       return await response.text();
     } catch (error) {
       url.errors.push(
-        `Error: (static) web page content not available for the url ${url}`
+        `Web page content (static) not available for the url ${url.url}`
       );
-      return '';
+      return undefined;
     }
   }
 
-  private async getDynamicWebPageContent(url: UrlParsed): Promise<string> {
+  private async getDynamicWebPageContent(
+    url: UrlParsed
+  ): Promise<string | undefined> {
     // TODO: implement
     url;
-    return '';
+    return undefined;
   }
 
-  private async getTranscriptContent(url: UrlParsed): Promise<string> {
-    const transcripts = await YoutubeTranscript.fetchTranscript(url.url);
-    // TODO: find a strategy to split the speech with pauses or something
-    let text = '';
-    for (const transcript of transcripts) {
-      text += transcript.text + ' ';
+  private async getTranscriptContent(
+    url: UrlParsed
+  ): Promise<string | undefined> {
+    try {
+      const transcripts = await YoutubeTranscript.fetchTranscript(url.url);
+
+      // TODO: find a strategy to split the speech with pauses or something
+      let text = '';
+      for (const transcript of transcripts) {
+        text += transcript.text + ' ';
+      }
+      text = he.decode(
+        text
+          .replace(/<text.+>/, '')
+          .replace(/&amp;/gi, '&')
+          .replace(/<\/?[^>]+(>|$)/g, '')
+      );
+      return text;
+    } catch (error) {
+      url.errors.push(
+        `Impossible to get youtube transcripts for the video ${url.url}`
+      );
+      return undefined;
     }
-    text = he.decode(
-      text
-        .replace(/<text.+>/, '')
-        .replace(/&amp;/gi, '&')
-        .replace(/<\/?[^>]+(>|$)/g, '')
-    );
-    return text;
   }
 }
