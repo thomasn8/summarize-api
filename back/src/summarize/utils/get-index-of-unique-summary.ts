@@ -1,8 +1,6 @@
 import { UrlParsed } from '../types/summarize.types';
 
 export function getIndexOfUniqueSummary(urls: UrlParsed[]): number | undefined {
-  if (urls.length === 1) return 0;
-
   let i = 0;
   let last = 0;
   let count = 0;
