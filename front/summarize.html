@@ -169,20 +169,20 @@
 			padding: 20px;
 			background-color: #fefefe;
 		}
-		.modal-summaries, .modal-errors {
+		.modal-summaries {
 			font-size: 0.75em;
 		}
-		.modal-summaries h3, .modal-errors h3{
-			margin: 8px 0;
+		.modal-summaries h3{
+			margin: 20px 0;
 		}
-		.modal-summaries p, .modal-errors p{
+		.modal-summaries p{
 			margin: 4px 0;
 			opacity: 0.75;
 		}
 		.modal-summaries .single-summary {
-			margin-bottom: 10px;
+			margin-bottom: 20px;
 		}
-		.modal-errors p{
+		.modal-summaries p.error {
 			color: red;
 		}
 		.close {
@@ -301,10 +301,10 @@
 					<h2>3. Content to summarize</h2>
 					<div class="input-container content-container">
 						<div class="tabs">
-							<input id="tab1" class="radio-tab" type="radio" name="request-type" value="query" checked>
-							<label for="tab1">Topic</label>
-							<input id="tab2" class="radio-tab" type="radio" name="request-type" value="urls">
-							<label for="tab2">Urls</label>
+							<input id="tab1" class="radio-tab" type="radio" name="request-type" value="urls" checked>
+							<label for="tab1">Urls</label>
+							<input id="tab2" class="radio-tab" type="radio" name="request-type" value="query">
+							<label for="tab2">Topic</label>
 						</div>
 						<script>
 						</script>
@@ -431,31 +431,23 @@
 			}
 
 			function updateModalWithData(data) {
-				let summaries = '';
-				if (data['summaries'] !== undefined && data['summaries'].length > 1) {
+					let summaries = '';
 					data['summaries'].forEach(url => {
-						summaries += `<div class="single-summary"><p>url: ${url['url']}</p><p>${url['summary']}</p></div>`;
+						summaries += '<div class="single-summary">';
+							if (data['summaries'].length > 1) summaries += `<p>url: ${url['url']}</p>`;
+							if (data['summaries'].length > 1 && url['summary'] !== undefined) summaries += `<p>${url['summary']}</p>`;
+							url['errors'].forEach(error => { summaries += `<p class="error">${error}</p>`; });
+						summaries += `</div>`;
 					});
-				}
-
-				let errors = '';
-				if (data['errors'] !== undefined && ['errors'].length > 0) {
-					data['errors'].forEach(error => {
-						errors += `<p>${error}</p>`;
-					});
-				}
 
 				const modalBody = document.getElementById('modal-body');
 				modalBody.innerHTML = `<div class="modal-summary"><h3>Summary</h3><p id="text-summary">${data['summary']}</p></div>`;
-				if (data['summary'] !== undefined && data['summary'].startsWith('Error') === false)
+				if (data['summary'].startsWith('Error') === false)
 					modalBody.innerHTML += '<div class="copy"><button id="copyBtn">Copy to clipboard</button></div>'
 				
-				if (summaries.length > 0)
+				if (data['summaries'].length > 1 || summaries.includes('<p class="error">'))
 					modalBody.innerHTML += `<div class="modal-summaries"><h3>Summaries by url</h3>${summaries}</div>`;
-				if (errors.length > 0)
-					modalBody.innerHTML += `<div class="modal-errors"><h3>Errors</h3><p>${errors}</p></div>`;
-
-				if (data['summary'] !== undefined && data['summary'].startsWith('Error') === false){
+				if (data['summary'].startsWith('Error') === false) {
 					const copyBtn = document.getElementById('copyBtn');
 					copyBtn.onclick = function() {
 						copyTextToClipboard();

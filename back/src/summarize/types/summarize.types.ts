@@ -29,11 +29,6 @@ export interface MetaDatas {
   keywords: string;
 }
 
-export interface Summaries {
-  url: string;
-  summary: string;
-}
-
 export interface DefinitiveSummarization {
   request: RequestDto;
   openai: Chat;

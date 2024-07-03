@@ -15,5 +15,6 @@ export function getIndexOfUniqueSummary(urls: UrlParsed[]): number | undefined {
     i++;
   }
   if (count === 1) return last;
-  return undefined;
+  if (count === 0) return -1;
+  return undefined; // means more than one summary
 }

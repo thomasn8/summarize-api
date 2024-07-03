@@ -58,6 +58,7 @@ export async function summarizeAll(
   urls: UrlParsed[]
 ): Promise<string> {
   const i = getIndexOfUniqueSummary(urls);
+  if (i === -1) return 'Error';
   if (i !== undefined) return urls[i].summary;
 
   const urlsSummariesJoined = urls.map((url) => url.summary).join('\n');

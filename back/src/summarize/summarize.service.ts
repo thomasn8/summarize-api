@@ -36,7 +36,6 @@ export class SummarizeService {
         ? this.parseUrls(request.urls)
         : await this.parseQuery(request.query, openai.contextWindow);
 
-    console.log(request.requestType);
     if (request.requestType === 'urls') {
       await Promise.all(
         urls.map(async (url) => {
@@ -82,28 +81,17 @@ export class SummarizeService {
       })
     );
 
-    if (urls.some((url) => url.summary !== undefined)) {
-      const overallSummary = await summarizeAll(request, openai, urls);
-      return {
-        summary: overallSummary,
-        summaries:
-          urls.length > 1
-            ? urls.map((url) => {
-                return {
-                  url: url.url,
-                  summary: url.summary ?? 'Error'
-                };
-              })
-            : undefined,
-        errors: urls.map((url) => url.errors).flat()
-      };
-    }
-
+    const overallSummary =
+      (await summarizeAll(request, openai, urls)) ?? 'Error'; // TODO: quickfix, try to understand why return undefined
     return {
-      summary: 'Error',
-      // summary: 'Summary not available',
-      // summary: undefined,
-      errors: urls.map((url) => url.errors).flat()
+      summary: overallSummary,
+      summaries: urls.map((url) => {
+        return {
+          url: url.url,
+          summary: url.summary,
+          errors: url.errors
+        };
+      })
     };
   }
 

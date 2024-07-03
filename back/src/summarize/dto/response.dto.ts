@@ -1,5 +1,10 @@
-import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
-import { Summaries } from '../types/summarize.types';
+import { IsArray, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+
+interface Summaries {
+  url: string;
+  summary?: string;
+  errors?: string[];
+}
 
 export class ResponseDto {
   @IsNotEmpty()
@@ -7,9 +12,6 @@ export class ResponseDto {
   summary: string;
 
   @IsOptional()
-  @IsString()
-  summaries?: Summaries[];
-
-  @IsNotEmpty()
-  errors: string[];
+  @IsArray()
+  summaries: Summaries[];
 }
