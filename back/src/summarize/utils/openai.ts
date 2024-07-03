@@ -7,6 +7,8 @@ import {
 import OpenAI from 'openai';
 import { getIndexOfUniqueSummary } from '../utils/get-index-of-unique-summary';
 
+// TODO: keep functions relative to openai here and export functions returning prompt string in another files
+
 export async function summarizeInOneChunk(
   ds: DefinitiveSummarization
 ): Promise<string> {
@@ -79,7 +81,7 @@ async function askChatGpt(
     { role: 'user', content: userMessage }
   ];
 
-  console.log(systemMessage);
+  // console.log(systemMessage);
 
   const chatCompletion = await chat.openai.chat.completions.create({
     messages: messages,

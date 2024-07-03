@@ -132,7 +132,7 @@ export class SummarizeService {
         })
       ).text();
 
-      //TODO: parse the urls found and add a field to these url
+      // TODO: parse the urls found and add a field to these url
 
       return [
         {
