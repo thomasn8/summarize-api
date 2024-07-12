@@ -51,12 +51,10 @@ export class SummarizeService {
                   : await this.getStaticWebPageContent(url)
                 : await this.getTranscriptContent(url);
 
-            if (text !== undefined)
-              url.chunks = await getChunks(text, openai.contextWindow);
-
-            if (url.chunks.length === 0) throw new Error();
+            if (url.errors.length !== 0) return;
+            url.chunks = await getChunks(text, openai.contextWindow);
           } catch (error) {
-            url.errors.push(`Content not available for the url ${url.url}`);
+            url.errors.push('Content not available');
           }
         })
       );
@@ -64,7 +62,8 @@ export class SummarizeService {
 
     await Promise.all(
       urls.map(async (url) => {
-        if (!url.chunks || url.chunks.length === 0) return;
+        if (url.errors.length !== 0) return;
+
         try {
           url.summary =
             url.chunks.length === 1
@@ -83,9 +82,7 @@ export class SummarizeService {
                   askChatGpt
                 );
         } catch (error) {
-          url.errors.push(
-            `Chatgpt could not generate a summary for the url ${url.url}`
-          );
+          url.errors.push('Chatgpt could not generate a summary');
         }
       })
     );
@@ -166,9 +163,7 @@ export class SummarizeService {
       });
       return await response.text();
     } catch (error) {
-      url.errors.push(
-        `Web page content (static) not available for the url ${url.url}`
-      );
+      url.errors.push('Web page content (static) not available');
       return undefined;
     }
   }
@@ -200,9 +195,7 @@ export class SummarizeService {
       );
       return text;
     } catch (error) {
-      url.errors.push(
-        `Impossible to get youtube transcripts for the video ${url.url}`
-      );
+      url.errors.push('Impossible to get youtube transcripts');
       return undefined;
     }
   }

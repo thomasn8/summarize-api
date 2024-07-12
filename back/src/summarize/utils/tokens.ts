@@ -4,6 +4,8 @@ export async function getChunks(
   text: string,
   contextWindow: number
 ): Promise<string[]> {
+  if (!text) throw new Error();
+
   const numberOfTokens = await countTokens(text);
   const maxNumberOfTokens = Math.floor(contextWindow * 0.75);
   if (numberOfTokens < maxNumberOfTokens) return [text];
@@ -28,6 +30,8 @@ export async function getChunks(
     j++;
   }
   if (chunk.length > 0) chunks.push(chunk);
+
+  if (chunks.length === 0) throw new Error();
   return chunks;
 }
 
