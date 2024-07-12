@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { RequestDto } from './dto/request.dto';
 import { ResponseDto } from './dto/response.dto';
-import { UrlParsed, Chat } from './types/summarize.types';
+import { UrlParsed } from './types/summarize.types';
 import { isInvalidUrl } from '../summarize/utils/urls';
 import { getChunks } from '../summarize/utils/tokens';
 import {
@@ -17,8 +17,7 @@ import {
 import axios from 'axios';
 import { YoutubeTranscript } from 'youtube-transcript';
 import * as he from 'he';
-import OpenAI from 'openai';
-import { askChatGpt } from './utils/openai';
+import { askChatGpt, getOpenAiInstance } from './utils/openai';
 
 // TODO: check new techniques of webscraping (with ai ?) to replace usage of jina which may become chargeable in the future
 
@@ -31,7 +30,7 @@ export class SummarizeService {
 
     // TODO: add possibility to use local llm (ollama) instead of passing by chatgpt
     // for this, adapts the code and some interfaces (like Chat and AskLlmFunction, ...)
-    const openai = await this.getOpenAiInstance(request);
+    const openai = await getOpenAiInstance(request);
 
     const urls =
       request.requestType === 'urls'
@@ -155,33 +154,6 @@ export class SummarizeService {
       ];
     } catch (error) {
       throw new InternalServerErrorException();
-    }
-  }
-
-  private async getOpenAiInstance(request: RequestDto): Promise<Chat> {
-    try {
-      const openai = new OpenAI({
-        apiKey: request.apiKey
-      });
-
-      // This is used to test if the model name exist (doesn't give informations about the token context window)
-      await openai.models.retrieve(request.model);
-
-      // TODO: find a way to get openai model context
-      const contextWindow = request.model.startsWith('gpt-3.5-turbo')
-        ? 16385
-        : 4096;
-
-      return {
-        openai: openai,
-        contextWindow: contextWindow,
-        model: request.model as OpenAI.Chat.ChatModel
-      };
-    } catch (error) {
-      throw new HttpException(
-        'Impossible to get OpenAI instance: ' + error.error.message,
-        500
-      );
     }
   }
 
