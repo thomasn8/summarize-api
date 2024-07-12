@@ -18,6 +18,7 @@ import axios from 'axios';
 import { YoutubeTranscript } from 'youtube-transcript';
 import * as he from 'he';
 import OpenAI from 'openai';
+import { askChatGpt } from './utils/openai';
 
 // TODO: check new techniques of webscraping (with ai ?) to replace usage of jina which may become chargeable in the future
 
@@ -29,6 +30,7 @@ export class SummarizeService {
       throw new HttpException('No content', HttpStatus.BAD_REQUEST);
 
     // TODO: add possibility to use local llm (ollama) instead of passing by chatgpt
+    // for this, adapts the code and some interfaces (like Chat and AskLlmFunction, ...)
     const openai = await this.getOpenAiInstance(request);
 
     const urls =
@@ -67,12 +69,20 @@ export class SummarizeService {
         try {
           url.summary =
             url.chunks.length === 1
-              ? await summarizeInOneChunk({
-                  request: request,
-                  openai: openai,
-                  textToSummarize: url.chunks[0]
-                })
-              : await summarizeInSeveralChunks(request, openai, url);
+              ? await summarizeInOneChunk(
+                  {
+                    request: request,
+                    openai: openai,
+                    textToSummarize: url.chunks[0]
+                  },
+                  askChatGpt
+                )
+              : await summarizeInSeveralChunks(
+                  request,
+                  openai,
+                  url,
+                  askChatGpt
+                );
         } catch (error) {
           url.errors.push(
             `Chatgpt could not generate a summary for the url ${url.url}`
@@ -82,7 +92,7 @@ export class SummarizeService {
     );
 
     const overallSummary =
-      (await summarizeAll(request, openai, urls)) ?? 'Error'; // TODO: quickfix, try to understand why return undefined
+      (await summarizeAll(request, openai, urls, askChatGpt)) ?? 'Error'; // TODO: quickfix, try to understand why return undefined
     return {
       summary: overallSummary,
       summaries: urls.map((url) => {

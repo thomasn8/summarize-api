@@ -34,3 +34,9 @@ export interface DefinitiveSummarization {
   openai: Chat;
   textToSummarize: string;
 }
+
+export type AskLlmFunction = (
+  llm: Chat,
+  systemMessage: string,
+  userMessage: string
+) => Promise<string>;
