@@ -8,7 +8,7 @@ export class SummarizeController {
   constructor(private readonly summarizeService: SummarizeService) {}
 
   @Post()
-  public async getSummary(@Body() request: RequestDto): Promise<ResponseDto> {
-    return await this.summarizeService.getSummary(request);
+  public async summarize(@Body() request: RequestDto): Promise<ResponseDto> {
+    return await this.summarizeService.summarize(request);
   }
 }

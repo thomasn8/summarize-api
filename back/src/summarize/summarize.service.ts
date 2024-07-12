@@ -13,7 +13,7 @@ import {
   summarizeInOneChunk,
   summarizeInSeveralChunks,
   summarizeAll
-} from './utils/openai';
+} from './utils/summarize';
 import axios from 'axios';
 import { YoutubeTranscript } from 'youtube-transcript';
 import * as he from 'he';
@@ -24,7 +24,7 @@ import OpenAI from 'openai';
 @Injectable()
 export class SummarizeService {
   // TODO: add logs (jina request, openai requests, etc)to a file a somehow
-  public async getSummary(request: RequestDto): Promise<ResponseDto> {
+  public async summarize(request: RequestDto): Promise<ResponseDto> {
     if (request.urls === undefined && request.query === undefined)
       throw new HttpException('No content', HttpStatus.BAD_REQUEST);
 
