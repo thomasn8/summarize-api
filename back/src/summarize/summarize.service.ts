@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   HttpException,
   HttpStatus,
   Injectable,
@@ -87,8 +88,13 @@ export class SummarizeService {
       })
     );
 
-    const overallSummary =
-      (await summarizeAll(request, openai, urls, askChatGpt)) ?? 'Error'; // TODO: quickfix, try to understand why return undefined
+    const overallSummary = await summarizeAll(
+      request,
+      openai,
+      urls,
+      askChatGpt
+    );
+
     return {
       summary: overallSummary,
       summaries: urls.map((url) => {
@@ -129,7 +135,7 @@ export class SummarizeService {
     text: string,
     contextWindow: number
   ): Promise<UrlParsed[]> {
-    // TODO: if a url is found, throw an error
+    if (this.isUrl(text)) throw new BadRequestException();
 
     try {
       const response = await (
@@ -197,6 +203,15 @@ export class SummarizeService {
     } catch (error) {
       url.errors.push('Impossible to get youtube transcripts');
       return undefined;
+    }
+  }
+
+  private isUrl(text: string): boolean {
+    try {
+      this.parseUrls(text);
+      return true;
+    } catch (error) {
+      return false;
     }
   }
 }

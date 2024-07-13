@@ -433,7 +433,7 @@
 					let summaries = '';
 					data['summaries'].forEach(url => {
 						summaries += '<div class="single-summary">';
-							if (data['summaries'].length > 1) summaries += `<p>url: ${url['url']}</p>`;
+							summaries += `<p>url: ${url['url']}</p>`;
 							if (data['summaries'].length > 1 && url['summary'] !== undefined) summaries += `<p>${url['summary']}</p>`;
 							url['errors'].forEach(error => { summaries += `<p class="error">${error}</p>`; });
 						summaries += `</div>`;
@@ -445,7 +445,7 @@
 					modalBody.innerHTML += '<div class="copy"><button id="copyBtn">Copy to clipboard</button></div>'
 				
 				if (data['summaries'].length > 1 || summaries.includes('<p class="error">'))
-					modalBody.innerHTML += `<div class="modal-summaries"><h3>Summaries by url</h3>${summaries}</div>`;
+					modalBody.innerHTML += `<div class="modal-summaries"><h3>Summaries for each url</h3>${summaries}</div>`;
 				if (data['summary'].startsWith('Error') === false) {
 					const copyBtn = document.getElementById('copyBtn');
 					copyBtn.onclick = function() {
