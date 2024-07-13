@@ -19,6 +19,7 @@ import axios from 'axios';
 import { YoutubeTranscript } from 'youtube-transcript';
 import * as he from 'he';
 import { askChatGpt, getOpenAiInstance } from './utils/openai';
+import { getJinaUrls } from './utils/jina';
 
 // TODO: check new techniques of webscraping (with ai ?) to replace usage of jina which may become chargeable in the future
 
@@ -60,6 +61,9 @@ export class SummarizeService {
         })
       );
     }
+
+    console.log('return');
+    throw new InternalServerErrorException();
 
     await Promise.all(
       urls.map(async (url) => {
@@ -143,6 +147,10 @@ export class SummarizeService {
           method: 'GET'
         })
       ).text();
+
+      console.log(response);
+      const urls = getJinaUrls(response);
+      console.log(urls);
 
       // TODO: parse the urls found and add a field to these url
 
