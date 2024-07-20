@@ -42,18 +42,25 @@ export class SummarizeService {
     if (request.requestType === 'urls') {
       await Promise.all(
         urls.map(async (url) => {
-          try {
-            url.axiosResponse = await axios.get(url.url);
+          let text = '';
+          if (url.contentType === 'YoutubeVideo') {
+            text = await this.getTranscriptContent(url);
+          } else {
+            try {
+              url.axiosResponse = await axios.get(url.url);
+            } catch (error) {
+              url.errors.push('Content not available');
+            }
+
             // TODO: differentiate between static webpage content (simple, use cheerio) and dynamic webpage content (use Puppeteer or Playwright)
+            text =
+              url.webPage === 'Dynamic'
+                ? await this.getDynamicWebPageContent(url)
+                : await this.getStaticWebPageContent(url);
+          }
 
-            const text =
-              url.contentType === 'WebPage'
-                ? url.webPage && url.webPage === 'Dynamic'
-                  ? await this.getDynamicWebPageContent(url)
-                  : await this.getStaticWebPageContent(url)
-                : await this.getTranscriptContent(url);
-
-            if (url.errors.length !== 0) return;
+          try {
+            if (url.errors.length !== 0 || text !== '') throw new Error();
             url.chunks = await getChunks(text, openai.contextWindow);
           } catch (error) {
             url.errors.push('Content not available');
@@ -201,9 +208,7 @@ export class SummarizeService {
     return urlsParsed;
   }
 
-  private async getStaticWebPageContent(
-    url: UrlParsed
-  ): Promise<string | undefined> {
+  private async getStaticWebPageContent(url: UrlParsed): Promise<string> {
     try {
       const response = await fetch('https://r.jina.ai/' + url.url, {
         method: 'GET'
@@ -211,21 +216,17 @@ export class SummarizeService {
       return await response.text();
     } catch (error) {
       url.errors.push('Web page content (static) not available');
-      return undefined;
+      return '';
     }
   }
 
-  private async getDynamicWebPageContent(
-    url: UrlParsed
-  ): Promise<string | undefined> {
+  private async getDynamicWebPageContent(url: UrlParsed): Promise<string> {
     // TODO: implement
     url;
-    return undefined;
+    return '';
   }
 
-  private async getTranscriptContent(
-    url: UrlParsed
-  ): Promise<string | undefined> {
+  private async getTranscriptContent(url: UrlParsed): Promise<string> {
     try {
       const transcripts = await YoutubeTranscript.fetchTranscript(url.url);
 
@@ -243,7 +244,7 @@ export class SummarizeService {
       return text;
     } catch (error) {
       url.errors.push('Impossible to get youtube transcripts');
-      return undefined;
+      return '';
     }
   }
 
