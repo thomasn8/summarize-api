@@ -300,9 +300,9 @@
 					<h2>3. Content to summarize</h2>
 					<div class="input-container content-container">
 						<div class="tabs">
-							<input id="tab1" class="radio-tab" type="radio" name="request-type" value="urls" checked>
+							<input id="tab1" class="radio-tab" type="radio" name="request-type" value="Urls" checked>
 							<label for="tab1">Urls</label>
-							<input id="tab2" class="radio-tab" type="radio" name="request-type" value="query">
+							<input id="tab2" class="radio-tab" type="radio" name="request-type" value="Query">
 							<label for="tab2">Topic</label>
 						</div>
 						<script>
@@ -332,7 +332,7 @@
 							}
 							
 							function update(textarea, selectedRadio, valuesMemorized) {
-								if (selectedRadio.value === 'query') {
+								if (selectedRadio.value === 'Query') {
 									valuesMemorized[0] = textarea.value;
 									textarea.value = valuesMemorized[1];
 									textarea.placeholder = 'The 7 wonders of the world and their characteristics';
@@ -397,8 +397,8 @@
 				expertise: expertise,
 				directive: directive,
 				requestType: requestType,
-				query: requestType === 'query' ? content : undefined,
-				urls: requestType === 'urls' ? content : undefined
+				query: requestType === 'Query' ? content : undefined,
+				urls: requestType === 'Urls' ? content : undefined
 			};
 
 			function showModal() {

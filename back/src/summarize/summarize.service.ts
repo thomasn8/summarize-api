@@ -1,9 +1,4 @@
-import {
-  HttpException,
-  HttpStatus,
-  Injectable,
-  InternalServerErrorException
-} from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { RequestDto } from './dto/request.dto';
 import { ResponseDto } from './dto/response.dto';
 import { UrlParsed } from './types/summarize.types';
@@ -33,9 +28,9 @@ export class SummarizeService {
     // for this, adapts the code and some interfaces (like Chat and AskLlmFunction, ...)
     const openai = await getOpenAiInstance(request);
 
-    let urls: UrlParsed[];
+    const urls: UrlParsed[] = [];
     if (request.requestType === 'Urls') {
-      urls = this.parseUrls(request.urls);
+      urls.push(...this.parseUrls(request.urls));
 
       await Promise.all(
         urls.map(async (url) => {
@@ -57,7 +52,7 @@ export class SummarizeService {
           }
 
           try {
-            if (url.errors.length !== 0 || text !== '') throw new Error();
+            if (url.errors.length !== 0 || text === '') throw new Error();
             url.chunks = await getChunks(text, openai.contextWindow);
           } catch (error) {
             url.errors.push('Content not available');
@@ -69,11 +64,13 @@ export class SummarizeService {
         throw new HttpException('Invalid query', HttpStatus.BAD_REQUEST);
 
       const jinaUrlsContent = await requestJinaWithQuery(request.query);
-      urls = await getJinaUrlsContent(jinaUrlsContent, openai.contextWindow);
+      urls.push(
+        ...(await getJinaUrlsContent(jinaUrlsContent, openai.contextWindow))
+      );
     }
 
-    console.log('return');
-    throw new InternalServerErrorException();
+    // console.log('return');
+    // throw new InternalServerErrorException();
 
     await Promise.all(
       urls.map(async (url) => {

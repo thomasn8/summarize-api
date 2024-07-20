@@ -73,7 +73,7 @@ export async function getJinaUrlsContent(
   );
 }
 
-export function getJinaUrls(text: string): string[] {
+function getJinaUrls(text: string): string[] {
   const urlRegex = /\[\d+\] URL Source: (https?:\/\/[^\s]+)/g;
   let match: RegExpExecArray;
   const urls: string[] = [];
@@ -86,7 +86,7 @@ export function getJinaUrls(text: string): string[] {
   return urls;
 }
 
-export function getJinaMarkdownContent(input: string): string[] {
+function getJinaMarkdownContent(input: string): string[] {
   const regex =
     /\[\d+\] Markdown Content:\n([\s\S]*?)(?=\[\d+\] Title|\[\d+\] URL Source|\[\d+\] Description|\[\d+\] Published Time|$)/g;
   const matches = [];
