@@ -19,7 +19,7 @@ import axios from 'axios';
 import { YoutubeTranscript } from 'youtube-transcript';
 import * as he from 'he';
 import { askChatGpt, getOpenAiInstance } from './utils/openai';
-import { getJinaUrls } from './utils/jina';
+import { getJinaMarkdownContent, getJinaUrls } from './utils/jina';
 
 // TODO: check new techniques of webscraping (with ai ?) to replace usage of jina which may become chargeable in the future
 
@@ -148,12 +148,20 @@ export class SummarizeService {
         })
       ).text();
 
-      console.log(response);
       const urls = getJinaUrls(response);
-      console.log(urls);
+      const markdownContents = getJinaMarkdownContent(response);
 
-      // TODO: parse the urls found and add a field to these url
-
+      if (urls.length === markdownContents.length) {
+        return await Promise.all(
+          urls.map(async (url, index) => ({
+            url: url,
+            contentType: 'WebPage',
+            webPage: 'Jina',
+            chunks: await getChunks(markdownContents[index], contextWindow),
+            errors: []
+          }))
+        );
+      }
       return [
         {
           url: 'https://s.jina.ai/ ' + text,

@@ -10,3 +10,15 @@ export function getJinaUrls(text: string): string[] {
   }
   return urls;
 }
+
+export function getJinaMarkdownContent(input: string): string[] {
+  const regex =
+    /\[\d+\] Markdown Content:\n([\s\S]*?)(?=\[\d+\] Title|\[\d+\] URL Source|\[\d+\] Description|\[\d+\] Published Time|$)/g;
+  const matches = [];
+  let match: RegExpExecArray;
+
+  while ((match = regex.exec(input)) !== null) {
+    matches.push(match[1].trim());
+  }
+  return matches;
+}
