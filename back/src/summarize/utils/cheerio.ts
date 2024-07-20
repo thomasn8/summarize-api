@@ -1,10 +1,19 @@
 import * as cheerio from 'cheerio';
-import { MetaDatas, UrlParsed } from '../types/summarize.types';
+import { UrlParsed } from '../types/summarize.types';
 import {
   cleanContiguousBlankCharacters,
   splitParagraphsInSentences,
   splitTextInParagraphs
 } from './text';
+
+interface MetaDatas {
+  title: string;
+  description: string;
+  site_name: string;
+  image: string;
+  icon: string;
+  keywords: string;
+}
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 function getStaticWebPageContent(url: UrlParsed): string[][] {

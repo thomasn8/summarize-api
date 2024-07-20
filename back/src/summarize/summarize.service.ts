@@ -1,5 +1,4 @@
 import {
-  BadRequestException,
   HttpException,
   HttpStatus,
   Injectable,
@@ -19,7 +18,7 @@ import axios from 'axios';
 import { YoutubeTranscript } from 'youtube-transcript';
 import * as he from 'he';
 import { askChatGpt, getOpenAiInstance } from './utils/openai';
-import { getJinaMarkdownContent, getJinaUrls } from './utils/jina';
+import { getJinaUrlsContent, requestJinaWithQuery } from './utils/jina';
 
 // TODO: check new techniques of webscraping (with ai ?) to replace usage of jina which may become chargeable in the future
 
@@ -34,12 +33,10 @@ export class SummarizeService {
     // for this, adapts the code and some interfaces (like Chat and AskLlmFunction, ...)
     const openai = await getOpenAiInstance(request);
 
-    const urls =
-      request.requestType === 'urls'
-        ? this.parseUrls(request.urls)
-        : await this.parseQuery(request.query, openai.contextWindow);
+    let urls: UrlParsed[];
+    if (request.requestType === 'Urls') {
+      urls = this.parseUrls(request.urls);
 
-    if (request.requestType === 'urls') {
       await Promise.all(
         urls.map(async (url) => {
           let text = '';
@@ -67,6 +64,12 @@ export class SummarizeService {
           }
         })
       );
+    } else if (request.requestType === 'Query') {
+      if (this.isUrl(request.query))
+        throw new HttpException('Invalid query', HttpStatus.BAD_REQUEST);
+
+      const jinaUrlsContent = await requestJinaWithQuery(request.query);
+      urls = await getJinaUrlsContent(jinaUrlsContent, openai.contextWindow);
     }
 
     console.log('return');
@@ -140,72 +143,6 @@ export class SummarizeService {
       );
     if (urlsParsed.length > 0) return urlsParsed;
     throw new HttpException('Invalid urls', HttpStatus.BAD_REQUEST);
-  }
-
-  private async parseQuery(
-    text: string,
-    contextWindow: number
-  ): Promise<UrlParsed[]> {
-    if (this.isUrl(text)) throw new BadRequestException();
-
-    let response: string;
-    let urls: string[];
-    let markdownContents: string[];
-    try {
-      response = await (
-        await fetch('https://s.jina.ai/ ' + text, {
-          method: 'GET'
-        })
-      ).text();
-      urls = getJinaUrls(response);
-      markdownContents = getJinaMarkdownContent(response);
-    } catch (error) {
-      throw new InternalServerErrorException();
-    }
-
-    let urlsParsed: UrlParsed[] = [];
-    if (urls.length === markdownContents.length) {
-      // TODO: test if need await Promise.all ...
-      urls.forEach(async (url, index) => {
-        const urlParsed: UrlParsed = {
-          url: url,
-          contentType: 'WebPage',
-          webPage: 'Jina',
-          chunks: [],
-          errors: []
-        };
-
-        try {
-          urlParsed.chunks = await getChunks(
-            markdownContents[index],
-            contextWindow
-          );
-          urlsParsed.push(urlParsed);
-        } catch (error) {
-          urlParsed.errors.push('Web page content (Jina) not available');
-        }
-      });
-    } else {
-      try {
-        const chunks = await getChunks(response, contextWindow);
-        urlsParsed = [
-          {
-            url: 'https://s.jina.ai/ ' + text,
-            contentType: 'WebPage',
-            webPage: 'Jina',
-            chunks: chunks,
-            errors: []
-          }
-        ];
-      } catch (error) {
-        throw new HttpException(
-          'Impossible to get a proper Jina response',
-          HttpStatus.INTERNAL_SERVER_ERROR
-        );
-      }
-    }
-
-    return urlsParsed;
   }
 
   private async getStaticWebPageContent(url: UrlParsed): Promise<string> {

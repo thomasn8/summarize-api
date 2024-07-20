@@ -8,6 +8,7 @@ import {
   MaxLength,
   Min
 } from 'class-validator';
+import { RequestType } from '../types/summarize.types';
 
 export class RequestDto {
   @IsNotEmpty()
@@ -46,7 +47,8 @@ export class RequestDto {
 
   @IsNotEmpty()
   @IsString()
-  requestType: string;
+  @IsIn(['Urls', 'Query'])
+  requestType: RequestType;
 
   @IsOptional()
   @IsString()
