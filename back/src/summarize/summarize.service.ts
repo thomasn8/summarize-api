@@ -141,39 +141,64 @@ export class SummarizeService {
   ): Promise<UrlParsed[]> {
     if (this.isUrl(text)) throw new BadRequestException();
 
+    let response: string;
+    let urls: string[];
+    let markdownContents: string[];
     try {
-      const response = await (
+      response = await (
         await fetch('https://s.jina.ai/ ' + text, {
           method: 'GET'
         })
       ).text();
-
-      const urls = getJinaUrls(response);
-      const markdownContents = getJinaMarkdownContent(response);
-
-      if (urls.length === markdownContents.length) {
-        return await Promise.all(
-          urls.map(async (url, index) => ({
-            url: url,
-            contentType: 'WebPage',
-            webPage: 'Jina',
-            chunks: await getChunks(markdownContents[index], contextWindow),
-            errors: []
-          }))
-        );
-      }
-      return [
-        {
-          url: 'https://s.jina.ai/ ' + text,
-          contentType: 'WebPage',
-          webPage: 'Jina',
-          chunks: await getChunks(response, contextWindow),
-          errors: []
-        }
-      ];
+      urls = getJinaUrls(response);
+      markdownContents = getJinaMarkdownContent(response);
     } catch (error) {
       throw new InternalServerErrorException();
     }
+
+    let urlsParsed: UrlParsed[] = [];
+    if (urls.length === markdownContents.length) {
+      // TODO: test if need await Promise.all ...
+      urls.forEach(async (url, index) => {
+        const urlParsed: UrlParsed = {
+          url: url,
+          contentType: 'WebPage',
+          webPage: 'Jina',
+          chunks: [],
+          errors: []
+        };
+
+        try {
+          urlParsed.chunks = await getChunks(
+            markdownContents[index],
+            contextWindow
+          );
+          urlsParsed.push(urlParsed);
+        } catch (error) {
+          urlParsed.errors.push('Web page content (Jina) not available');
+        }
+      });
+    } else {
+      try {
+        const chunks = await getChunks(response, contextWindow);
+        urlsParsed = [
+          {
+            url: 'https://s.jina.ai/ ' + text,
+            contentType: 'WebPage',
+            webPage: 'Jina',
+            chunks: chunks,
+            errors: []
+          }
+        ];
+      } catch (error) {
+        throw new HttpException(
+          'Impossible to get a proper Jina response',
+          HttpStatus.INTERNAL_SERVER_ERROR
+        );
+      }
+    }
+
+    return urlsParsed;
   }
 
   private async getStaticWebPageContent(
