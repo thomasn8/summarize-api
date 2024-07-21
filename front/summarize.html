@@ -401,6 +401,25 @@
 				urls: requestType === 'Urls' ? content : undefined
 			};
 
+			fetch(apiEndpoint, {
+				method: 'POST',
+				headers: {
+						'Content-Type': 'application/json'
+				},
+				body: JSON.stringify(data)
+			})
+			.then(response => response.json())
+			.then(data => {
+				if (data['summary'] !== undefined) {
+					updateModalWithData(data);
+				} else {
+					updateModalWithError(data);	
+				}
+			})
+			.catch((error) => {
+				updateModalWithError(error);
+			});
+
 			function showModal() {
 				const modal = document.getElementById('myModal');
 				const modalBody = document.getElementById('modal-body');
@@ -470,29 +489,11 @@
 						</div>`
 				} else {
 					modalBody.innerHTML = `<div class="modal-summary"><h3>Error</h3>
-							<p id="text-summary">Oups, something went wrong!</p>
+							<p id="text-summary">Oups! Something went wrong:</p>
+							<p id="text-summary">${error}</p>
 						</div>`
 				}
 			}
-
-			fetch(apiEndpoint, {
-				method: 'POST',
-				headers: {
-						'Content-Type': 'application/json'
-				},
-				body: JSON.stringify(data)
-			})
-			.then(response => response.json())
-			.then(data => {
-				if (data['summary'] !== undefined) {
-					updateModalWithData(data);
-				} else {
-					updateModalWithError(data);	
-				}
-			})
-			.catch((error) => {
-				updateModalWithError(error);
-			});
 		})
 	</script>
 </body>
