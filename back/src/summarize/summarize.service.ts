@@ -128,7 +128,9 @@ export class SummarizeService {
                   askChatGpt
                 );
         } catch (error) {
-          url.errors.push('Chatgpt could not generate a summary');
+          url.errors.push(
+            'Impossible to generate a summary: ' + error.error.message
+          );
         }
       })
     );
