@@ -1,19 +1,34 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+
 import { RequestDto } from './dto/request.dto';
 import { ResponseDto } from './dto/response.dto';
-import { UrlParsed } from './types/summarize.types';
-import { isInvalidUrl } from '../summarize/utils/urls';
-import { getChunks } from '../summarize/utils/tokens';
 import {
-  summarizeInOneChunk,
-  summarizeInSeveralChunks,
-  summarizeAll
-} from './utils/summarize';
-import axios from 'axios';
-import { YoutubeTranscript } from 'youtube-transcript';
-import * as he from 'he';
+  AskLlmFunction,
+  Chat,
+  LastSummarization,
+  Summary,
+  UrlParsed
+} from './types/summarize.types';
+import {
+  getDynamicWebPageContent,
+  getStaticWebPageContent,
+  getTranscriptContent
+} from './utils/webscraping';
+import { isUrl, parseUrls } from '../summarize/utils/urls';
+import { getChunks } from '../summarize/utils/tokens';
 import { askChatGpt, getOpenAiInstance } from './utils/openai';
 import { getJinaUrlsContent, requestJinaWithQuery } from './utils/jina';
+import { getIndexOfUniqueSummary } from './utils/get-index-of-unique-summary';
+import {
+  getDetailsPart,
+  getDirectivePart,
+  getDisclaimerPart,
+  getExpertisePart,
+  getLanguagePart,
+  getLengthPart
+} from './utils/prompts';
+
+import axios from 'axios';
 
 // TODO: check new techniques of webscraping (with ai ?) to replace usage of jina which may become chargeable in the future
 
@@ -25,58 +40,80 @@ export class SummarizeService {
     // for this, adapts the code and some interfaces (like Chat and AskLlmFunction, ...)
     const openai = await getOpenAiInstance(request);
 
+    const urls: UrlParsed[] = await this.getWebscrapingContent(
+      request,
+      openai.contextWindow
+    );
+
+    // console.log('return');
+    // throw new HttpException('Invalid', HttpStatus.INTERNAL_SERVER_ERROR);
+
+    const summaries = await this.getSummaries(request, openai, urls);
+    const summary = await this.getSummary(request, openai, urls, askChatGpt);
+
+    return {
+      summary: summary,
+      summaries: summaries
+    };
+  }
+
+  private async getWebscrapingContent(
+    request: RequestDto,
+    chunkLength: number
+  ): Promise<UrlParsed[]> {
     const urls: UrlParsed[] = [];
+
     if (request.requestType === 'Urls') {
-      urls.push(...this.parseUrls(request.urls));
+      urls.push(...parseUrls(request.urls));
 
       await Promise.all(
         urls.map(async (url) => {
           let text = '';
           if (url.contentType === 'YoutubeVideo') {
-            text = await this.getTranscriptContent(url);
+            text = await getTranscriptContent(url);
           } else {
             try {
               url.axiosResponse = await axios.get(url.url);
             } catch (error) {
               url.errors.push('Content not available');
             }
-
-            // TODO: differentiate between static webpage content (simple, use cheerio) and dynamic webpage content (use Puppeteer or Playwright)
             text =
-              url.webPage === 'Dynamic'
-                ? await this.getDynamicWebPageContent(url)
-                : await this.getStaticWebPageContent(url);
+              url.webPage === 'Static'
+                ? await getStaticWebPageContent(url)
+                : await getDynamicWebPageContent(url);
           }
 
           try {
             if (url.errors.length !== 0 || text === '') throw new Error();
-            url.chunks = await getChunks(text, openai.contextWindow);
+            url.chunks = await getChunks(text, chunkLength);
           } catch (error) {
             url.errors.push('Content not available');
           }
         })
       );
     } else if (request.requestType === 'Query') {
-      if (this.isUrl(request.query))
+      if (isUrl(request.query))
         throw new HttpException('Invalid query', HttpStatus.BAD_REQUEST);
 
       const jinaUrlsContent = await requestJinaWithQuery(request.query);
-      urls.push(
-        ...(await getJinaUrlsContent(jinaUrlsContent, openai.contextWindow))
-      );
+      urls.push(...(await getJinaUrlsContent(jinaUrlsContent, chunkLength)));
     }
 
-    console.log('return');
-    throw new HttpException('Invalid', HttpStatus.INTERNAL_SERVER_ERROR);
+    return urls;
+  }
 
+  private async getSummaries(
+    request: RequestDto,
+    openai: Chat,
+    urls: UrlParsed[]
+  ): Promise<Summary[]> {
     await Promise.all(
       urls.map(async (url) => {
         if (url.errors.length !== 0) return;
-
         try {
           url.summary =
             url.chunks.length === 1
-              ? await summarizeInOneChunk(
+              ? await this.summarizeInOneChunk(
                   {
                     request: request,
                     openai: openai,
@@ -84,7 +121,7 @@ export class SummarizeService {
                   },
                   askChatGpt
                 )
-              : await summarizeInSeveralChunks(
+              : await this.summarizeInSeveralChunks(
                   request,
                   openai,
                   url,
@@ -96,95 +133,85 @@ export class SummarizeService {
       })
     );
 
-    const overallSummary = await summarizeAll(
-      request,
-      openai,
-      urls,
-      askChatGpt
-    );
+    return urls.map((url) => {
+      return {
+        url: url.url,
+        summary: url.summary,
+        errors: url.errors
+      };
+    });
+  }
 
-    return {
-      summary: overallSummary,
-      summaries: urls.map((url) => {
+  private async getSummary(
+    request: RequestDto,
+    openai: Chat,
+    urls: UrlParsed[],
+    askLlm: AskLlmFunction
+  ): Promise<string> {
+    const i = getIndexOfUniqueSummary(urls);
+    if (i === -1) return 'Error';
+    if (i !== undefined) return urls[i].summary;
+
+    const urlsSummariesJoined = urls.map((url) => url.summary).join('\n');
+    return this.summarizeInOneChunk(
+      {
+        request: request,
+        openai: openai,
+        textToSummarize: urlsSummariesJoined
+      },
+      askLlm
+    );
+  }
+
+  private async summarizeInSeveralChunks(
+    request: RequestDto,
+    openai: Chat,
+    url: UrlParsed,
+    askLlm: AskLlmFunction
+  ): Promise<string> {
+    const chunkSummariesList = await Promise.all(
+      url.chunks.map(async (chunk, index) => {
+        let systemMessage = '';
+        systemMessage +=
+          getExpertisePart(request.expertise ?? undefined) + '\n';
+        systemMessage +=
+          getDirectivePart(request.directive ?? undefined) + '\n';
+        systemMessage += getDetailsPart(2) + '\n'; // force asking a detailed summary
+        systemMessage += getDisclaimerPart();
+        const userMessage = `Text to summarize:\n\`\`\`${chunk}\`\`\``;
         return {
-          url: url.url,
-          summary: url.summary,
-          errors: url.errors
+          index: index,
+          chunkSummary: await askLlm(openai, systemMessage, userMessage)
         };
       })
-    };
+    );
+
+    chunkSummariesList.sort((a, b) => a.index - b.index);
+    const chunksSummariesJoined = chunkSummariesList
+      .map((chunk) => chunk.chunkSummary)
+      .join('\n');
+    return this.summarizeInOneChunk(
+      {
+        request: request,
+        openai: openai,
+        textToSummarize: chunksSummariesJoined
+      },
+      askLlm
+    );
   }
 
-  private parseUrls(text: string): UrlParsed[] {
-    const urls: string[] = text
-      .split('\n')
-      .map((url) => url.trim())
-      .filter((url) => url.length > 0);
-
-    if (urls.some((url) => isInvalidUrl(url)))
-      throw new HttpException('Invalid urls', HttpStatus.BAD_REQUEST);
-
-    const urlsParsed: UrlParsed[] = urls.map((url) => {
-      return url.toLowerCase().includes('youtube.com')
-        ? { url: url, contentType: 'YoutubeVideo', errors: [] }
-        : { url: url, contentType: 'WebPage', errors: [] };
-    });
-
-    if (urlsParsed.length > 30)
-      throw new HttpException(
-        'Too many urls, maximum 30',
-        HttpStatus.BAD_REQUEST
-      );
-    if (urlsParsed.length > 0) return urlsParsed;
-    throw new HttpException('Invalid urls', HttpStatus.BAD_REQUEST);
-  }
-
-  private async getStaticWebPageContent(url: UrlParsed): Promise<string> {
-    try {
-      const response = await fetch('https://r.jina.ai/' + url.url, {
-        method: 'GET'
-      });
-      return await response.text();
-    } catch (error) {
-      url.errors.push('Web page content (static) not available');
-      return '';
-    }
-  }
-
-  private async getDynamicWebPageContent(url: UrlParsed): Promise<string> {
-    // TODO: implement
-    url;
-    return '';
-  }
-
-  private async getTranscriptContent(url: UrlParsed): Promise<string> {
-    try {
-      const transcripts = await YoutubeTranscript.fetchTranscript(url.url);
-
-      // TODO: find a strategy to split the speech with pauses or something
-      let text = '';
-      for (const transcript of transcripts) {
-        text += transcript.text + ' ';
-      }
-      text = he.decode(
-        text
-          .replace(/<text.+>/, '')
-          .replace(/&amp;/gi, '&')
-          .replace(/<\/?[^>]+(>|$)/g, '')
-      );
-      return text;
-    } catch (error) {
-      url.errors.push('Impossible to get youtube transcripts');
-      return '';
-    }
-  }
-
-  private isUrl(text: string): boolean {
-    try {
-      this.parseUrls(text);
-      return true;
-    } catch (error) {
-      return false;
-    }
+  private async summarizeInOneChunk(
+    ds: LastSummarization,
+    askLlm: AskLlmFunction
+  ): Promise<string> {
+    let systemMessage = '';
+    systemMessage += getExpertisePart(ds.request.expertise ?? undefined) + '\n';
+    systemMessage += getDirectivePart(ds.request.directive ?? undefined) + '\n';
+    systemMessage += getDetailsPart(ds.request.details - 1) + '\n';
+    systemMessage += getLanguagePart(ds.request.language) + '\n';
+    systemMessage += getLengthPart(ds.request.length ?? undefined) + '\n';
+    systemMessage += getDisclaimerPart();
+    const userMessage = `Text to summarize:\n\`\`\`${ds.textToSummarize}\`\`\``;
+    return await askLlm(ds.openai, systemMessage, userMessage);
   }
 }

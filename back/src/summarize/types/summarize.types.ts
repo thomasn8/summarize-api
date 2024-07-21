@@ -5,6 +5,13 @@ import OpenAI from 'openai';
 export type RequestType = 'Urls' | 'Query';
 export type UrlContentType = 'WebPage' | 'YoutubeVideo';
 export type WebPage = 'Static' | 'Dynamic' | 'Jina';
+
+export type AskLlmFunction = (
+  llm: Chat,
+  systemMessage: string,
+  userMessage: string
+) => Promise<string>;
+
 export interface UrlParsed {
   url: string;
   contentType: UrlContentType;
@@ -26,14 +33,14 @@ export interface Chat {
   model: OpenAI.Chat.ChatModel;
 }
 
-export interface DefinitiveSummarization {
+export interface LastSummarization {
   request: RequestDto;
   openai: Chat;
   textToSummarize: string;
 }
 
-export type AskLlmFunction = (
-  llm: Chat,
-  systemMessage: string,
-  userMessage: string
-) => Promise<string>;
+export interface Summary {
+  url: string;
+  summary: string | undefined;
+  errors: string[];
+}
