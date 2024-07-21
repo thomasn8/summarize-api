@@ -21,9 +21,6 @@ import { getJinaUrlsContent, requestJinaWithQuery } from './utils/jina';
 export class SummarizeService {
   // TODO: add logs (jina request, openai requests, etc)to a file a somehow
   public async summarize(request: RequestDto): Promise<ResponseDto> {
-    if (request.urls === undefined && request.query === undefined)
-      throw new HttpException('No content', HttpStatus.BAD_REQUEST);
-
     // TODO: add possibility to use local llm (ollama) instead of passing by chatgpt
     // for this, adapts the code and some interfaces (like Chat and AskLlmFunction, ...)
     const openai = await getOpenAiInstance(request);
@@ -69,8 +66,8 @@ export class SummarizeService {
       );
     }
 
-    // console.log('return');
-    // throw new InternalServerErrorException();
+    console.log('return');
+    throw new HttpException('Invalid', HttpStatus.INTERNAL_SERVER_ERROR);
 
     await Promise.all(
       urls.map(async (url) => {

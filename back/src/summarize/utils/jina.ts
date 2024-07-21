@@ -5,6 +5,9 @@ import { getChunks } from './tokens';
 export async function requestJinaWithQuery(
   text: string
 ): Promise<JinaResponseParsed[]> {
+  if (text.length < 2)
+    throw new HttpException('Invalid request', HttpStatus.BAD_REQUEST);
+
   let response: string;
   let urls: string[];
   let markdownContents: string[];

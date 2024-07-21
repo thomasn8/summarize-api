@@ -1,4 +1,4 @@
-import { HttpException } from '@nestjs/common';
+import { HttpException, HttpStatus } from '@nestjs/common';
 import { RequestDto } from '../dto/request.dto';
 import { Chat } from '../types/summarize.types';
 import OpenAI from 'openai';
@@ -25,7 +25,7 @@ export async function getOpenAiInstance(request: RequestDto): Promise<Chat> {
   } catch (error) {
     throw new HttpException(
       'Impossible to get OpenAI instance: ' + error.error.message,
-      500
+      HttpStatus.BAD_REQUEST
     );
   }
 }
