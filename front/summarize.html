@@ -388,7 +388,7 @@
 			const content = document.getElementById('content').value;
 
 			const apiEndpoint = 'https://localhost:9443/summarize';
-			const data = {
+			const body = {
 				apiKey: apiKey,
 				model: model,
 				details: details,
@@ -401,24 +401,51 @@
 				urls: requestType === 'Urls' ? content : undefined
 			};
 
-			fetch(apiEndpoint, {
-				method: 'POST',
-				headers: {
-						'Content-Type': 'application/json'
-				},
-				body: JSON.stringify(data)
-			})
-			.then(response => response.json())
-			.then(data => {
-				if (data['summary'] !== undefined) {
-					updateModalWithData(data);
+			let cache = getCache();
+			console.log("this is the current cache:", cache);
+			const key = JSON.stringify(body);
+
+			if (cache.has(key)) {
+				console.log("found in cache");
+        const cachedResponse = cache.get(key);
+
+				if (cachedResponse['summary'] !== undefined) {
+					updateModalWithData(cachedResponse);
 				} else {
-					updateModalWithError(data);	
+					updateModalWithError(cachedResponse);	
 				}
-			})
-			.catch((error) => {
-				updateModalWithError(error);
-			});
+    	} else {
+				console.log("request the server");
+				fetch(apiEndpoint, {
+					method: 'POST',
+					headers: {
+							'Content-Type': 'application/json'
+					},
+					body: JSON.stringify(body)
+				})
+				.then(response => response.json())
+				.then(data => {
+					if (data['summary'] !== undefined) {
+						updateModalWithData(data);
+					} else {
+						updateModalWithError(data);	
+					}
+					cache.set(key, data);
+					saveCache(cache)
+				})
+				.catch((error) => {
+					updateModalWithError(error);
+				});
+			}
+
+			function getCache() {
+					const cache = localStorage.getItem('cache');
+					return cache ? new Map(JSON.parse(cache)) : new Map();
+			}
+
+			function saveCache(cache) {
+					localStorage.setItem('cache', JSON.stringify(Array.from(cache.entries())));
+			}
 
 			function showModal() {
 				const modal = document.getElementById('myModal');
