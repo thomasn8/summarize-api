@@ -39,6 +39,16 @@ export class SummarizeService {
     // for this, adapts the code and some interfaces (like Chat and AskLlmFunction, ...)
     const openai = await getOpenAiInstance(request);
 
+    return {
+      summary: 'test',
+      summaries: [
+        { url: 'test1', summary: 'test1', errors: [] },
+        { url: 'test2', summary: 'test2', errors: [] }
+      ]
+    };
+    // console.log('return');
+    // throw new HttpException('Invalid 2', HttpStatus.INTERNAL_SERVER_ERROR);
+
     const urls: UrlParsed[] = await this.getWebscrapingContent(
       request,
       openai.contextWindow

@@ -430,6 +430,13 @@
 			}
 
 			function updateModalWithData(data) {
+				const modalBody = document.getElementById('modal-body');
+
+				modalBody.innerHTML = `<div class="modal-summary"><h3>Summary</h3><p id="text-summary">${data['summary']}</p></div>`;
+				if (data['summary'].startsWith('Error') === false)
+					modalBody.innerHTML += '<div class="copy"><button id="copyBtn">Copy to clipboard</button></div>'
+			
+				if (data['summaries'] !== undefined) {
 					let summaries = '';
 					data['summaries'].forEach(url => {
 						summaries += '<div class="single-summary">';
@@ -439,18 +446,32 @@
 						summaries += `</div>`;
 					});
 
-				const modalBody = document.getElementById('modal-body');
-				modalBody.innerHTML = `<div class="modal-summary"><h3>Summary</h3><p id="text-summary">${data['summary']}</p></div>`;
-				if (data['summary'].startsWith('Error') === false)
-					modalBody.innerHTML += '<div class="copy"><button id="copyBtn">Copy to clipboard</button></div>'
+					if (data['summaries'].length > 1 || summaries.includes('<p class="error">'))
+						modalBody.innerHTML += `<div class="modal-summaries"><h3>Summaries for each url</h3>${summaries}</div>`;
+				}
 				
-				if (data['summaries'].length > 1 || summaries.includes('<p class="error">'))
-					modalBody.innerHTML += `<div class="modal-summaries"><h3>Summaries for each url</h3>${summaries}</div>`;
 				if (data['summary'].startsWith('Error') === false) {
 					const copyBtn = document.getElementById('copyBtn');
 					copyBtn.onclick = function() {
 						copyTextToClipboard();
 					}
+				}
+			}
+
+			function updateModalWithError(error){
+				const modalBody = document.getElementById('modal-body');
+
+				if (error['statusCode'] !== undefined && error['message'] !== undefined) {
+					const statusCode = error['statusCode'];
+					const message = error['message'];
+					modalBody.innerHTML = `<div class="modal-summary"><h3>Error</h3>
+							<p id="text-summary">Status code: ${statusCode}</p>
+							<p id="text-summary">Error message: ${message}</p>
+						</div>`
+				} else {
+					modalBody.innerHTML = `<div class="modal-summary"><h3>Error</h3>
+							<p id="text-summary">Oups, something went wrong!</p>
+						</div>`
 				}
 			}
 
@@ -466,11 +487,11 @@
 				if (data['summary'] !== undefined) {
 					updateModalWithData(data);
 				} else {
-					throw new Error(`${data['message'] ?? 'something went wrong'}`);
+					updateModalWithError(data);	
 				}
 			})
 			.catch((error) => {
-				updateModalWithData({summary: `Error: ${error}`});
+				updateModalWithError(error);
 			});
 		})
 	</script>
