@@ -2,12 +2,12 @@ import { get_encoding } from 'tiktoken';
 
 export async function getChunks(
   text: string,
-  contextWindow: number
+  llmContextWindow: number
 ): Promise<string[]> {
   if (!text) throw new Error();
 
   const numberOfTokens = await countTokens(text);
-  const maxNumberOfTokens = Math.floor(contextWindow * 0.75);
+  const maxNumberOfTokens = Math.floor(llmContextWindow * 0.75);
   if (numberOfTokens < maxNumberOfTokens) return [text];
 
   const ratio = Math.ceil(numberOfTokens / maxNumberOfTokens);

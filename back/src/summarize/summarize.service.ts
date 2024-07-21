@@ -15,10 +15,9 @@ import {
   getTranscriptContent
 } from './utils/webscraping';
 import { isUrl, parseUrls } from '../summarize/utils/urls';
-import { getChunks } from '../summarize/utils/tokens';
+import { getChunks } from './utils/get-chunks';
 import { askChatGpt, getOpenAiInstance } from './utils/openai';
 import { getJinaUrlsContent, requestJinaWithQuery } from './utils/jina';
-import { getIndexOfUniqueSummary } from './utils/get-index-of-unique-summary';
 import {
   getDetailsPart,
   getDirectivePart,
@@ -44,9 +43,6 @@ export class SummarizeService {
       request,
       openai.contextWindow
     );
-
-    // console.log('return');
-    // throw new HttpException('Invalid', HttpStatus.INTERNAL_SERVER_ERROR);
 
     const summaries = await this.getSummaries(request, openai, urls);
     const summary = await this.getSummary(request, openai, urls, askChatGpt);
@@ -150,7 +146,7 @@ export class SummarizeService {
     urls: UrlParsed[],
     askLlm: AskLlmFunction
   ): Promise<string> {
-    const i = getIndexOfUniqueSummary(urls);
+    const i = this.getIndexOfUniqueSummary(urls);
     if (i === -1) return 'Error';
     if (i !== undefined) return urls[i].summary;
 
@@ -163,6 +159,23 @@ export class SummarizeService {
       },
       askLlm
     );
+  }
+
+  private getIndexOfUniqueSummary(urls: UrlParsed[]): number | undefined {
+    let i = 0;
+    let last = 0;
+    let count = 0;
+    while (i < urls.length) {
+      if (urls[i].summary !== undefined) {
+        last = i;
+        count++;
+      }
+      if (count > 1) break;
+      i++;
+    }
+    if (count === 1) return last;
+    if (count === 0) return -1;
+    return undefined; // means more than one summary
   }
 
   private async summarizeInSeveralChunks(

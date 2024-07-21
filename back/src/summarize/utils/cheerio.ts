@@ -16,7 +16,7 @@ interface MetaDatas {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-function getStaticWebPageContent(url: UrlParsed): string[][] {
+export function getStaticWebPageContent(url: UrlParsed): string[][] {
   try {
     const $ = cheerio.load(url.axiosResponse.data);
     $('nav, footer').remove();

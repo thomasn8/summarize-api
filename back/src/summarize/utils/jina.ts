@@ -1,6 +1,6 @@
 import { HttpException, HttpStatus } from '@nestjs/common';
 import { JinaResponseParsed, UrlParsed } from '../types/summarize.types';
-import { getChunks } from './tokens';
+import { getChunks } from './get-chunks';
 
 export async function requestJinaWithQuery(
   text: string
@@ -92,11 +92,11 @@ function getJinaUrls(text: string): string[] {
 function getJinaMarkdownContent(input: string): string[] {
   const regex =
     /\[\d+\] Markdown Content:\n([\s\S]*?)(?=\[\d+\] Title|\[\d+\] URL Source|\[\d+\] Description|\[\d+\] Published Time|$)/g;
-  const matches = [];
   let match: RegExpExecArray;
+  const markdownContents: string[] = [];
 
   while ((match = regex.exec(input)) !== null) {
-    matches.push(match[1].trim());
+    markdownContents.push(match[1].trim());
   }
-  return matches;
+  return markdownContents;
 }
