@@ -1,4 +1,3 @@
-<!-- TODO: cache request + response and if they are there is 2 consecutives request, return the cached response -->
 <!-- TODO: responsiv -->
 <!-- TODO: check security about the api-key, should encrypt ? -->
 <!-- TODO: style -->
@@ -167,6 +166,7 @@
 			height: calc(90vh - 40px);
 			padding: 20px;
 			background-color: #fefefe;
+			overflow: auto;
 		}
 		.modal-summaries {
 			font-size: 0.75em;
@@ -402,11 +402,9 @@
 			};
 
 			let cache = getCache();
-			console.log("this is the current cache:", cache);
 			const key = JSON.stringify(body);
 
 			if (cache.has(key)) {
-				console.log("found in cache");
         const cachedResponse = cache.get(key);
 
 				if (cachedResponse['summary'] !== undefined) {
@@ -415,7 +413,6 @@
 					updateModalWithError(cachedResponse);	
 				}
     	} else {
-				console.log("request the server");
 				fetch(apiEndpoint, {
 					method: 'POST',
 					headers: {
@@ -430,6 +427,7 @@
 					} else {
 						updateModalWithError(data);	
 					}
+
 					cache.set(key, data);
 					saveCache(cache)
 				})
