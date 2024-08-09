@@ -7,14 +7,10 @@ all:	start
 
 start:
 			${DOCKER} up -d --build
-build:
-			${DOCKER} build
 down:
 			${DOCKER} down
 setup:
 			${DOCKER} -f ./docker-compose.setup.yml up -d --build
-started:
-			${DOCKER} -f ./docker-compose.started.yml up -d --build
 clean: down
 			 rm -rf back _build/nginx/certs
 re:		down start
@@ -38,4 +34,4 @@ runback:
 runnginx:
 			${DOCKER} exec nginx bash
 
-.PHONY:		all start build down setup clean re logs flogs back nginx runback runningx
+.PHONY:	all start down setup clean re logs flogs back nginx runback runnginx

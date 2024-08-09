@@ -26,6 +26,7 @@ services:
       - .env
     environment:
       BUILD_TYPE: prod
+    restart: "on-failure"
 
 networks:
   app_network:

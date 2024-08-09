@@ -1,12 +1,10 @@
 # Docker compose for nestjs backend and angular frontend (both with node 20.12) and nginx as proxy server
 
-## Init a new project:
+## Setup:
+copy and update .env.example
 run ```make setup```
 
-## Clone a started project:
-run ```make started```
-
-## Local dev (node_modules present):
+## Dev:
 run ```make```
 
 ## Prod:
