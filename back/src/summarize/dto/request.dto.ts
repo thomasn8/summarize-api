@@ -11,10 +11,6 @@ import {
 import { RequestType } from '../types/summarize.types';
 
 export class RequestDto {
-  @IsOptional()
-  @IsString()
-  apiKey: string;
-
   @IsNotEmpty()
   @IsString()
   model: string;
@@ -24,6 +20,10 @@ export class RequestDto {
   @Min(4096)
   @Max(128000)
   contextWindow: number;
+
+  @IsOptional()
+  @IsString()
+  apiKey: string;
 
   @IsNotEmpty()
   @IsNumber()
