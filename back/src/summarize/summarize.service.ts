@@ -2,12 +2,7 @@ import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 
 import { RequestDto } from './dto/request.dto';
 import { ResponseDto } from './dto/response.dto';
-import {
-  AskLlmFunction,
-  Chat,
-  Summary,
-  UrlParsed
-} from './types/summarize.types';
+import { Chat, Summary, UrlParsed } from './types/summarize.types';
 import {
   getDynamicWebPageContent,
   getStaticWebPageContent,
@@ -15,7 +10,7 @@ import {
 } from './utils/webscraping';
 import { isUrl, parseUrls } from '../summarize/utils/urls';
 import { getChunks } from './utils/get-chunks';
-import { askChatGpt, getOpenAiInstance } from './utils/openai';
+import { getOpenaiInstance } from './utils/openai';
 import { getJinaUrlsContent, requestJinaWithQuery } from './utils/jina';
 import {
   getDetailsPart,
@@ -27,24 +22,22 @@ import {
 } from './utils/prompts';
 
 import axios from 'axios';
+import { askLocalLlm } from './utils/ollama';
 
 // TODO: check new techniques of webscraping (with ai ?) to replace usage of jina which may become chargeable in the future
+// TODO: add logs (jina request, openai requests, etc)to a file a somehow
 
 @Injectable()
 export class SummarizeService {
-  // TODO: add logs (jina request, openai requests, etc)to a file a somehow
   public async summarize(request: RequestDto): Promise<ResponseDto> {
-    // TODO: add possibility to use local llm (ollama) instead of passing by chatgpt
-    // for this, adapts the code and some interfaces (like Chat and AskLlmFunction, ...)
-    const openai = await getOpenAiInstance(request);
+    const chat = request.model.startsWith('openai-')
+      ? await getOpenaiInstance(request)
+      : { model: request.model, askLlm: askLocalLlm };
 
-    const urls: UrlParsed[] = await this.getWebscrapingContent(
-      request,
-      openai.contextWindow
-    );
+    const urls: UrlParsed[] = await this.getWebscrapingContent(request);
 
-    const summaries = await this.getSummaries(request, openai, urls);
-    const summary = await this.getSummary(request, openai, urls, askChatGpt);
+    const summaries = await this.getSummaries(request, chat, urls);
+    const summary = await this.getSummary(request, chat, urls);
 
     return {
       summary: summary,
@@ -53,8 +46,7 @@ export class SummarizeService {
   }
 
   private async getWebscrapingContent(
-    request: RequestDto,
-    chunkLength: number
+    request: RequestDto
   ): Promise<UrlParsed[]> {
     const urls: UrlParsed[] = [];
 
@@ -80,7 +72,7 @@ export class SummarizeService {
 
           try {
             if (url.errors.length !== 0 || text === '') throw new Error();
-            url.chunks = await getChunks(text, chunkLength);
+            url.chunks = await getChunks(text, request.contextWindow);
           } catch (error) {
             url.errors.push('Content not available');
           }
@@ -91,7 +83,9 @@ export class SummarizeService {
         throw new HttpException('Invalid query', HttpStatus.BAD_REQUEST);
 
       const jinaUrlsContent = await requestJinaWithQuery(request.query);
-      urls.push(...(await getJinaUrlsContent(jinaUrlsContent, chunkLength)));
+      urls.push(
+        ...(await getJinaUrlsContent(jinaUrlsContent, request.contextWindow))
+      );
     }
 
     return urls;
@@ -99,7 +93,7 @@ export class SummarizeService {
 
   private async getSummaries(
     request: RequestDto,
-    openai: Chat,
+    chat: Chat,
     urls: UrlParsed[]
   ): Promise<Summary[]> {
     await Promise.all(
@@ -108,18 +102,8 @@ export class SummarizeService {
         try {
           url.summary =
             url.chunks.length === 1
-              ? await this.summarizeInOneChunk(
-                  request,
-                  openai,
-                  url.chunks[0],
-                  askChatGpt
-                )
-              : await this.summarizeInSeveralChunks(
-                  request,
-                  openai,
-                  url,
-                  askChatGpt
-                );
+              ? await this.summarizeInOneChunk(request, chat, url.chunks[0])
+              : await this.summarizeInSeveralChunks(request, chat, url);
         } catch (error) {
           url.errors.push(
             'Impossible to generate a summary: ' + error.error.message
@@ -139,21 +123,15 @@ export class SummarizeService {
 
   private async getSummary(
     request: RequestDto,
-    openai: Chat,
-    urls: UrlParsed[],
-    askLlm: AskLlmFunction
+    chat: Chat,
+    urls: UrlParsed[]
   ): Promise<string> {
     const i = this.getIndexOfUniqueSummary(urls);
     if (i === -1) return 'Error';
     if (i !== undefined) return urls[i].summary;
 
     const urlsSummariesJoined = urls.map((url) => url.summary).join('\n');
-    return this.summarizeInOneChunk(
-      request,
-      openai,
-      urlsSummariesJoined,
-      askLlm
-    );
+    return this.summarizeInOneChunk(request, chat, urlsSummariesJoined);
   }
 
   private getIndexOfUniqueSummary(urls: UrlParsed[]): number | undefined {
@@ -175,9 +153,8 @@ export class SummarizeService {
 
   private async summarizeInSeveralChunks(
     request: RequestDto,
-    openai: Chat,
-    url: UrlParsed,
-    askLlm: AskLlmFunction
+    chat: Chat,
+    url: UrlParsed
   ): Promise<string> {
     const chunkSummariesList = await Promise.all(
       url.chunks.map(async (chunk, index) => {
@@ -191,7 +168,7 @@ export class SummarizeService {
         const userMessage = `Text to summarize:\n\`\`\`${chunk}\`\`\``;
         return {
           index: index,
-          chunkSummary: await askLlm(openai, systemMessage, userMessage)
+          chunkSummary: await chat.askLlm(chat, systemMessage, userMessage)
         };
       })
     );
@@ -200,19 +177,13 @@ export class SummarizeService {
     const chunksSummariesJoined = chunkSummariesList
       .map((chunk) => chunk.chunkSummary)
       .join('\n');
-    return this.summarizeInOneChunk(
-      request,
-      openai,
-      chunksSummariesJoined,
-      askLlm
-    );
+    return this.summarizeInOneChunk(request, chat, chunksSummariesJoined);
   }
 
   private async summarizeInOneChunk(
     request: RequestDto,
-    openai: Chat,
-    textToSummarize: string,
-    askLlm: AskLlmFunction
+    chat: Chat,
+    textToSummarize: string
   ): Promise<string> {
     let systemMessage = '';
     systemMessage += getExpertisePart(request.expertise ?? undefined) + '\n';
@@ -222,6 +193,6 @@ export class SummarizeService {
     systemMessage += getLengthPart(request.length ?? undefined) + '\n';
     systemMessage += getDisclaimerPart();
     const userMessage = `Text to summarize:\n\`\`\`${textToSummarize}\`\`\``;
-    return await askLlm(openai, systemMessage, userMessage);
+    return await chat.askLlm(chat, systemMessage, userMessage);
   }
 }

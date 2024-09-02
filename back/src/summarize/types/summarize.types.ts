@@ -27,9 +27,9 @@ export interface JinaResponseParsed {
 }
 
 export interface Chat {
-  openai: OpenAI;
-  contextWindow?: number;
-  model: OpenAI.Chat.ChatModel;
+  model: string;
+  openai?: OpenAI;
+  askLlm: AskLlmFunction;
 }
 
 export interface Summary {

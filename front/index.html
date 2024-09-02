@@ -259,14 +259,37 @@
 		<div class="form-container">
 			<div class="column column-1">
 				<section class="small-height">
-					<h2>1. OpenAI</h2>
-					<div class="input-container apikey-container">
-						<label for="api-key">1.1 Api key</label>
-						<input type="text" id="api-key" name="api-key" autocomplete="on" autofocus required>
-					</div>
+					<h2>1. Summarizer</h2>
 					<div class="input-container model-container">
-						<label for="model">1.2 Model</label>
-						<input type="text" id="model" name="model" autocomplete="on" value="gpt-3.5-turbo" placeholder="gpt-3.5-turbo" required>
+						<label for="model">1.1 Model</label>
+						<select type="text" id="model" name="model" required></select>
+						<script>
+							const map = new Map([
+									["openai-gpt-4o-mini", {contextWindow: 128000, displayName: "Openai GPT 4o mini"}],
+									["openai-gpt-4o", {contextWindow: 128000, displayName: "Openai GPT 4o"}],
+									["openai-gpt-4-turbo", {contextWindow: 128000, displayName: "Openai GPT 4"}],
+									["gemma2:9b", {contextWindow: 8192, displayName: "Gemma2 9b"}]
+							]);
+			
+							const selectElement = document.getElementById('model');
+			
+							function generateOptions(map) {
+									map.forEach((value, key) => {
+											const option = document.createElement('option');
+											option.value = key;
+											option.textContent = value.displayName;
+											option.setAttribute("data-context-window", value.contextWindow)
+											if (key === "gpt-4o-mini") option.selected = true;
+											selectElement.appendChild(option);
+									});
+							}
+			
+							generateOptions(map);
+					</script>
+					</div>
+					<div class="input-container apikey-container">
+						<label for="api-key">1.2 *Api key</label>
+						<input type="text" id="api-key" name="api-key" autocomplete="on" placeholder="Leave empty if the model is not from openai" required>
 					</div>
 				</section>
 				<section class="big-height">
@@ -402,6 +425,7 @@
 
 			const apiKey = document.getElementById('api-key').value;
 			const model = document.getElementById('model').value;
+			const contextWindow = document.getElementById('model').options[selectElement.selectedIndex].getAttribute("data-context-window");
 			const details = document.getElementById('details').value;
 			const length = document.getElementById('length').value;
 			const language = document.getElementById('language').value;
@@ -414,6 +438,7 @@
 			const body = {
 				apiKey: apiKey,
 				model: model,
+				contextWindow: contextWindow,
 				details: details,
 				length: length,
 				language: language,
@@ -452,7 +477,6 @@
 					}
 
 					cache.set(key, data);
-					// TODO: not save if there was an error
 					saveCache(cache)
 				})
 				.catch((error) => {

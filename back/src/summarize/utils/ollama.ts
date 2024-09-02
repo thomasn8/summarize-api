@@ -14,11 +14,11 @@ export async function askLocalLlm(
   const chatCompletion = await axios.post(
     'http://host.docker.internal:11434/api/chat',
     {
-      model: 'gemma2:9b',
+      model: chat.model,
       messages: messages,
       stream: false,
       options: {
-        seed: 101,
+        seed: 101, // reproductible outputs
         temperature: 0
       }
     }

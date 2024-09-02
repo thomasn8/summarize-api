@@ -3,24 +3,20 @@ import { RequestDto } from '../dto/request.dto';
 import { Chat } from '../types/summarize.types';
 import OpenAI from 'openai';
 
-export async function getOpenAiInstance(request: RequestDto): Promise<Chat> {
+export async function getOpenaiInstance(request: RequestDto): Promise<Chat> {
   try {
     const openai = new OpenAI({
       apiKey: request.apiKey
     });
 
-    // This is used to test if the model name exist (doesn't give informations about the token context window)
-    await openai.models.retrieve(request.model);
+    const model = request.model.substring('openai-'.length);
 
-    // TODO: find a way to get openai model context
-    const contextWindow = request.model.startsWith('gpt-3.5-turbo')
-      ? 16385
-      : 4096;
+    await openai.models.retrieve(model);
 
     return {
       openai: openai,
-      contextWindow: contextWindow,
-      model: request.model as OpenAI.Chat.ChatModel
+      model: model as OpenAI.Chat.ChatModel,
+      askLlm: askChatGpt
     };
   } catch (error) {
     throw new HttpException(

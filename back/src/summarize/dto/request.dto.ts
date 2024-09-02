@@ -21,6 +21,12 @@ export class RequestDto {
 
   @IsNotEmpty()
   @IsNumber()
+  @Min(4096)
+  @Max(128000)
+  contextWindow: number;
+
+  @IsNotEmpty()
+  @IsNumber()
   @IsIn([1, 2, 3])
   details: number;
 
