@@ -1,10 +1,9 @@
-import { RequestDto } from '../dto/request.dto';
 import { AxiosResponse } from 'axios';
 import OpenAI from 'openai';
 
 export type RequestType = 'Urls' | 'Query';
 export type UrlContentType = 'WebPage' | 'YoutubeVideo';
-export type WebPage = 'Static' | 'Dynamic' | 'Jina';
+export type WebPageType = 'Static' | 'Dynamic' | 'Jina';
 
 export type AskLlmFunction = (
   llm: Chat,
@@ -16,7 +15,7 @@ export interface UrlParsed {
   url: string;
   contentType: UrlContentType;
   axiosResponse?: AxiosResponse;
-  webPage?: WebPage;
+  webPage?: WebPageType;
   chunks?: string[];
   summary?: string;
   errors: string[];
