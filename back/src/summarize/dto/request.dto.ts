@@ -11,7 +11,7 @@ import {
 import { RequestType } from '../types/summarize.types';
 
 export class RequestDto {
-  @IsNotEmpty()
+  @IsOptional()
   @IsString()
   apiKey: string;
 
