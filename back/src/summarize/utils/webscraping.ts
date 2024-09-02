@@ -27,8 +27,6 @@ export async function getDynamicWebPageContent(
 export async function getTranscriptContent(url: UrlParsed): Promise<string> {
   try {
     const transcripts = await YoutubeTranscript.fetchTranscript(url.url);
-
-    // TODO: find a strategy to split the speech with pauses or something
     let text = '';
     for (const transcript of transcripts) {
       text += transcript.text + ' ';

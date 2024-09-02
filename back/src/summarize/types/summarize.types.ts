@@ -33,12 +33,6 @@ export interface Chat {
   model: OpenAI.Chat.ChatModel;
 }
 
-export interface LastSummarization {
-  request: RequestDto;
-  openai: Chat;
-  textToSummarize: string;
-}
-
 export interface Summary {
   url: string;
   summary: string | undefined;

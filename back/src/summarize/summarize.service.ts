@@ -5,7 +5,6 @@ import { ResponseDto } from './dto/response.dto';
 import {
   AskLlmFunction,
   Chat,
-  LastSummarization,
   Summary,
   UrlParsed
 } from './types/summarize.types';
@@ -110,11 +109,9 @@ export class SummarizeService {
           url.summary =
             url.chunks.length === 1
               ? await this.summarizeInOneChunk(
-                  {
-                    request: request,
-                    openai: openai,
-                    textToSummarize: url.chunks[0]
-                  },
+                  request,
+                  openai,
+                  url.chunks[0],
                   askChatGpt
                 )
               : await this.summarizeInSeveralChunks(
@@ -152,11 +149,9 @@ export class SummarizeService {
 
     const urlsSummariesJoined = urls.map((url) => url.summary).join('\n');
     return this.summarizeInOneChunk(
-      {
-        request: request,
-        openai: openai,
-        textToSummarize: urlsSummariesJoined
-      },
+      request,
+      openai,
+      urlsSummariesJoined,
       askLlm
     );
   }
@@ -206,27 +201,27 @@ export class SummarizeService {
       .map((chunk) => chunk.chunkSummary)
       .join('\n');
     return this.summarizeInOneChunk(
-      {
-        request: request,
-        openai: openai,
-        textToSummarize: chunksSummariesJoined
-      },
+      request,
+      openai,
+      chunksSummariesJoined,
       askLlm
     );
   }
 
   private async summarizeInOneChunk(
-    ds: LastSummarization,
+    request: RequestDto,
+    openai: Chat,
+    textToSummarize: string,
     askLlm: AskLlmFunction
   ): Promise<string> {
     let systemMessage = '';
-    systemMessage += getExpertisePart(ds.request.expertise ?? undefined) + '\n';
-    systemMessage += getDirectivePart(ds.request.directive ?? undefined) + '\n';
-    systemMessage += getDetailsPart(ds.request.details - 1) + '\n';
-    systemMessage += getLanguagePart(ds.request.language) + '\n';
-    systemMessage += getLengthPart(ds.request.length ?? undefined) + '\n';
+    systemMessage += getExpertisePart(request.expertise ?? undefined) + '\n';
+    systemMessage += getDirectivePart(request.directive ?? undefined) + '\n';
+    systemMessage += getDetailsPart(request.details - 1) + '\n';
+    systemMessage += getLanguagePart(request.language) + '\n';
+    systemMessage += getLengthPart(request.length ?? undefined) + '\n';
     systemMessage += getDisclaimerPart();
-    const userMessage = `Text to summarize:\n\`\`\`${ds.textToSummarize}\`\`\``;
-    return await askLlm(ds.openai, systemMessage, userMessage);
+    const userMessage = `Text to summarize:\n\`\`\`${textToSummarize}\`\`\``;
+    return await askLlm(openai, systemMessage, userMessage);
   }
 }
