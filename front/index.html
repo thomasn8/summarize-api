@@ -452,6 +452,7 @@
 					}
 
 					cache.set(key, data);
+					// TODO: not save if there was an error
 					saveCache(cache)
 				})
 				.catch((error) => {
