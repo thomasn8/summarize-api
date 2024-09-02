@@ -2,6 +2,9 @@ import { UrlParsed } from '../types/summarize.types';
 import { YoutubeTranscript } from 'youtube-transcript';
 import * as he from 'he';
 
+// TODO: check new techniques of webscraping (with ai ?) to replace usage of jina which may become chargeable in the future
+// TODO: add logs (jina request, openai requests, etc)to a file a somehow
+
 // TODO: use Jina ai provisory, later  use cheerio
 export async function getStaticWebPageContent(url: UrlParsed): Promise<string> {
   try {

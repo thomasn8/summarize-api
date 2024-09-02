@@ -24,9 +24,6 @@ import {
 import axios from 'axios';
 import { askLocalLlm } from './utils/ollama';
 
-// TODO: check new techniques of webscraping (with ai ?) to replace usage of jina which may become chargeable in the future
-// TODO: add logs (jina request, openai requests, etc)to a file a somehow
-
 @Injectable()
 export class SummarizeService {
   public async summarize(request: RequestDto): Promise<ResponseDto> {
