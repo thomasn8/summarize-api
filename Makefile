@@ -1,7 +1,7 @@
 include .env
 
-DOCKER = docker-compose -f ./docker-compose.dev.yml -p ${APP_NAME}
-# DOCKER = docker-compose -f ./docker-compose.prod.yml -p ${APP_NAME}
+# DOCKER = docker-compose -f ./docker-compose.dev.yml -p ${APP_NAME}
+DOCKER = docker-compose -f ./docker-compose.prod.yml -p ${APP_NAME}
 
 all:	start
 
