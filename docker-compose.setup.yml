@@ -1,9 +1,5 @@
 services:
 
-  nginx:
-    environment:
-      BUILD_TYPE: "Setup" 
-
   back:
     environment:
       BUILD_TYPE: "Setup"

@@ -1,24 +1,9 @@
 services:
 
-  nginx:
-    build: ./_build/nginx
-    depends_on:
-      - back
-    ports:
-      - "9080:80"
-      - "9443:443"
-    volumes:
-      - ./_build/nginx/certs:/certs
-    networks:
-      - app_network
-    restart: "no"
-
   back:
     build: ./_build/back
     volumes:
       - ./back:/${APP_NAME}
-    networks:
-      - app_network
     working_dir: /${APP_NAME}
     env_file:
       - .env
@@ -27,6 +12,3 @@ services:
     tty: true
     ports:
       - "4000:4000"
-
-networks:
-  app_network:

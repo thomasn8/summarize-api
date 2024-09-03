@@ -1,6 +1,5 @@
 if [ "$BUILD_TYPE" = "Setup" ];
 then
-	nest new app --package-manager npm
 	mv -f ./app/* .
 	mv -f ./app/.gitignore .
 	rm -rf app

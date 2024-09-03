@@ -1,32 +1,14 @@
 services:
 
-  nginx:
-    build: ./_build/nginx
-    depends_on:
-      - back
-    ports:
-      - "9080:80"
-      - "9443:443"
-    volumes:
-      - ./_build/nginx/certs:/certs
-    networks:
-      - app_network
-    environment:
-      BUILD_TYPE: prod
-    restart: "on-failure"
-
   back:
     build: ./_build/back
     volumes:
       - ./back:/${APP_NAME}
-    networks:
-      - app_network
     working_dir: /${APP_NAME}
     env_file:
       - .env
     environment:
       BUILD_TYPE: prod
     restart: "on-failure"
-
-networks:
-  app_network:
+    ports:
+      - "4000:4000"
