@@ -1,4 +1,4 @@
-if [ "$BUILD_TYPE" = "Setup" ];
+if [ "$BUILD_TYPE" = "setup" ];
 then
 	mv -f ./app/* .
 	mv -f ./app/.gitignore .
@@ -6,7 +6,7 @@ then
 	npm install
 fi
 
-if [ "$BUILD_TYPE" = "Prod" ];
+if [ "$BUILD_TYPE" = "prod" ];
 then
 	npm run build
   npm run start:prod

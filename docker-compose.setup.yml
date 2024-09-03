@@ -2,4 +2,4 @@ services:
 
   back:
     environment:
-      BUILD_TYPE: "Setup"
+      BUILD_TYPE: "setup"
