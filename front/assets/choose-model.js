@@ -1,7 +1,6 @@
 const map = new Map([
 	["openai-gpt-4o-mini", {contextWindow: 128000, displayName: "Openai GPT 4o mini"}],
 	["openai-gpt-4o", {contextWindow: 128000, displayName: "Openai GPT 4o"}],
-	["openai-gpt-4-turbo", {contextWindow: 128000, displayName: "Openai GPT 4"}],
 	["gemma2:9b", {contextWindow: 8192, displayName: "Gemma2 9b"}]
 ]);
 
