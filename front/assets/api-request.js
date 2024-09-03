@@ -41,7 +41,7 @@ document.getElementById('apiForm').addEventListener('submit', function(event) {
 	const requestType = requestTypeElement.value;
 	const content = contentElement.value;
 
-	const apiEndpoint = 'http://192.168.1.151/api/summarize';
+	const apiEndpoint = 'https://thomas-nanchen.dev/api/summarize';
 	const body = {
 		model: model,
 		contextWindow: contextWindow,
