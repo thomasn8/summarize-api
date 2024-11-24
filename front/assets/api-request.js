@@ -5,7 +5,6 @@ const lengthElement = document.getElementById('length');
 const languageElement = document.getElementById('language');
 const expertiseElement = document.getElementById('expertise');
 const directiveElement = document.getElementById('directive');
-const requestTypeElement = document.querySelector('input[name="request-type"]:checked');
 const contentElement = document.getElementById('content');
 
 document.getElementById('clear-cache').addEventListener('click', function(event) {
@@ -38,7 +37,7 @@ document.getElementById('apiForm').addEventListener('submit', function(event) {
 	const language = languageElement.value;
 	const expertise = expertiseElement.value;
 	const directive = directiveElement.value;
-	const requestType = requestTypeElement.value;
+	const requestType = document.querySelector('input[name="request-type"]:checked').value;
 	const content = contentElement.value;
 
 	const apiEndpoint = 'https://thomas-nanchen.dev/api/summarize';
