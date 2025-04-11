@@ -1,4 +1,4 @@
-# Docker compose for nestjs backend and angular frontend (both with node 20.12) and nginx as proxy server
+# Simple summarize API with web/video scrapping
 
 ## Setup:
 copy and update .env.example
